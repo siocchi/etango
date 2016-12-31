@@ -1,0 +1,3 @@
+[submodule "webfront"]
+	path = webfront
+	url = https://github.com/iwag/react-static-boilerplate.git
