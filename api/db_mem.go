@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/md5"
 	"fmt"
+	"net/http"
 )
 
 
@@ -18,7 +19,7 @@ func newDbMem() *linkDbMem {
 	}
 }
 
-func (db *linkDbMem) GetLink(key string) (string, error) {
+func (db *linkDbMem) GetLink(key string, r *http.Request) (string, error) {
 	l, err := db.links[key]
 	if err == false {
 		return "", nil // TODO !!
@@ -27,7 +28,7 @@ func (db *linkDbMem) GetLink(key string) (string, error) {
 	return l, nil
 }
 
-func (db *linkDbMem) AddLink(l string) (string, error) {
+func (db *linkDbMem) AddLink(l string, r *http.Request) (string, error) {
 	key :=  fmt.Sprintf("%x", md5.Sum([]byte(l)))
 	db.links[key] = l
 	return key, nil

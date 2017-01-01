@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	"gopkg.in/gin-gonic/gin.v1"
-	"log"
 )
 
 type LinkDb interface {
@@ -14,38 +13,34 @@ type LinkDb interface {
 	Close() error
 }
 
+type word struct {
+		Id    int 	`json:"id"`
+		Text string	`json:"text"`
+}
+
 var (
 	db LinkDb
 )
 
-func redirectToLink(c *gin.Context) {
-	key := c.Param("key")
 
-	if l,e := db.GetLink(key, c.Request); e == nil {
-		c.Redirect(http.StatusMovedPermanently, l)
-	} else {
-		c.String(http.StatusNotFound, "not found")
+func words(c *gin.Context) {
+	var js = []word {
+		word {
+			Id: 1,
+			Text: "test",
+		},
 	}
-}
-
-func createLink(c *gin.Context) {
-	l := c.PostForm("link")
-	key, err := db.AddLink(l, c.Request);
-	if err != nil {
-		c.String(http.StatusNoContent, "not found")
-	} else {
-		log.Printf("shorten_link:" + key)
-		c.String(http.StatusOK, "http://localhost:8080/" + key) // TODO
-	}
+	c.Header("Access-Control-Allow-Origin", "*")
+    c.JSON(http.StatusOK, js)
 }
 
 func init() {
-	db = newDbGoon() 
+	db = newDbMem() // newDbGoon()
 
+	gin.SetMode(gin.DebugMode)
 	r := gin.Default()
 
-	r.POST("/create", createLink)
-	r.GET("/:key", redirectToLink)
+	r.GET("/v1/words.json", words)
 
-	http.Handle("/", r)
+	http.Handle("/v1/", r)
 }
