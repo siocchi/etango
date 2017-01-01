@@ -11,6 +11,8 @@ type linkDbMem struct{
 	links map[string]string
 }
 
+var counter int32 = 0
+
 // var _ LinkDb = &linkDbMem{}
 
 func newDbMem() *linkDbMem {
@@ -29,7 +31,8 @@ func (db *linkDbMem) GetLink(key string, r *http.Request) (string, error) {
 }
 
 func (db *linkDbMem) AddLink(l string, r *http.Request) (string, error) {
-	key :=  fmt.Sprintf("%x", md5.Sum([]byte(l)))
+	ikey := atomic.AddInt32(&counter, 1)
+	key := fmt.Sprint(ikey)
 	db.links[key] = l
 	return key, nil
 }
