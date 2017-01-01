@@ -1,9 +1,10 @@
 package main
 
 import (
-	"crypto/md5"
-	"fmt"
 	"net/http"
+	"sync/atomic"
+	"fmt"
+	"strconv"
 )
 
 
@@ -21,13 +22,25 @@ func newDbMem() *linkDbMem {
 	}
 }
 
-func (db *linkDbMem) GetLink(key string, r *http.Request) (string, error) {
-	l, err := db.links[key]
-	if err == false {
-		return "", nil // TODO !!
-	}
+func values(m map[string]string) []Word {
+    vs := []Word{}
+    for i, t := range m {
+			ii, err := strconv.Atoi(i)
+			if err!=nil {
+					return vs
+			}
+			v := Word{
+				Id: ii,
+				Text: t,
+			}
+      vs = append(vs, v)
+    }
+    return vs
+}
 
-	return l, nil
+
+func (db *linkDbMem) GetAll(r *http.Request) ([]Word, error) {
+	return values(db.links), nil
 }
 
 func (db *linkDbMem) AddLink(l string, r *http.Request) (string, error) {

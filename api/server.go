@@ -9,7 +9,7 @@ import (
 )
 
 type LinkDb interface {
-	GetLink(string, *http.Request) (string, error)
+	GetAll(*http.Request) ([]Word, error)
 
 	AddLink(string, *http.Request) (string, error)
 
@@ -31,14 +31,15 @@ var (
 	db LinkDb
 )
 
-
 func words(c *gin.Context) {
-	var js = []word {
-		word {
-			Id: 1,
-			Text: "test",
-		},
+	c.Header("Access-Control-Allow-Origin", "*")
+	if all, err := db.GetAll(c.Request); err == nil {
+		c.JSON(http.StatusOK, all)
+	} else {
+		c.JSON(http.StatusInternalServerError, "error")
 	}
+}
+
 func create(c *gin.Context) {
   var json PostWord
 	c.Header("Access-Control-Allow-Origin", "*")
