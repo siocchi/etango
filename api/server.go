@@ -8,10 +8,10 @@ import (
 
 )
 
-type LinkDb interface {
+type WordDb interface {
 	GetAll(*http.Request) ([]Word, error)
 
-	AddLink(string, *http.Request) (string, error)
+	AddWord(string, *http.Request) (string, error)
 
 	Close() error
 }
@@ -28,7 +28,7 @@ type (
 )
 
 var (
-	db LinkDb
+	db WordDb
 )
 
 func words(c *gin.Context) {
@@ -44,12 +44,12 @@ func create(c *gin.Context) {
   var json PostWord
 	c.Header("Access-Control-Allow-Origin", "*")
 	if c.BindJSON(&json) == nil {
-			log.Infof(appengine.NewContext(c.Request), "post:%v", json)
-			db.AddLink(json.Text, c.Request)
-      c.JSON(http.StatusOK, gin.H{"status": "ok"})
-  } else {
-      c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
-  }
+		log.Infof(appengine.NewContext(c.Request), "post:%v", json)
+		db.AddWord(json.Text, c.Request)
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	} else {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
+	}
 }
 
 func init() {

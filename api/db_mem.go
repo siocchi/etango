@@ -8,17 +8,15 @@ import (
 )
 
 
-type linkDbMem struct{
-	links map[string]string
+type wordDbMem struct{
+	words map[string]string
 }
 
 var counter int32 = 0
 
-// var _ LinkDb = &linkDbMem{}
-
-func newDbMem() *linkDbMem {
-	return &linkDbMem{
-		links:  make(map[string]string),
+func newDbMem() *wordDbMem {
+	return &wordDbMem{
+		words:  make(map[string]string),
 	}
 }
 
@@ -39,17 +37,17 @@ func values(m map[string]string) []Word {
 }
 
 
-func (db *linkDbMem) GetAll(r *http.Request) ([]Word, error) {
-	return values(db.links), nil
+func (db *wordDbMem) GetAll(r *http.Request) ([]Word, error) {
+	return values(db.words), nil
 }
 
-func (db *linkDbMem) AddLink(l string, r *http.Request) (string, error) {
+func (db *wordDbMem) AddWord(l string, r *http.Request) (string, error) {
 	ikey := atomic.AddInt32(&counter, 1)
 	key := fmt.Sprint(ikey)
-	db.links[key] = l
+	db.words[key] = l
 	return key, nil
 }
 
-func (db *linkDbMem) Close() error {
+func (db *wordDbMem) Close() error {
 	return nil
 }
