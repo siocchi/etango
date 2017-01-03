@@ -21,6 +21,9 @@ type (
 		Id    int 	`json:"id"`
 		Text string	`json:"text"`
 		Memo string `json:"memo"`
+		Tag	 string `json:"tag"`
+		IsReview bool `json:"is_review"`
+		IsInput bool `json:"is_input"`
 		Count int	 `json:"count"`
 		Priority int `json:"priority"`
 		UpdatedAt time.Time `json:"updated_at"`
