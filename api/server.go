@@ -66,7 +66,7 @@ func create(c *gin.Context) {
 }
 
 func init() {
-	db = newDbMem() // newDbGoon()
+	db = newDbGoon() // newDbMem()
 
 	gin.SetMode(gin.DebugMode)
 	r := gin.Default()
