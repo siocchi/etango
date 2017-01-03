@@ -5,13 +5,13 @@ import (
 	"gopkg.in/gin-gonic/gin.v1"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine"
-
+	"time"
 )
 
 type WordDb interface {
 	GetAll(*http.Request) ([]Word, error)
 
-	AddWord(string, *http.Request) (string, error)
+	AddWord(PostWord, *http.Request) (string, error)
 
 	Close() error
 }
@@ -20,10 +20,20 @@ type (
 	Word struct {
 		Id    int 	`json:"id"`
 		Text string	`json:"text"`
+		Memo string `json:"memo"`
+		Count int	 `json:"count"`
+		Priority int `json:"priority"`
+		UpdatedAt time.Time `json:"updated_at"`
 	}
 
 	PostWord struct {
 		Text     string `form:"text" json:"text" binding:"required"`
+	}
+
+	EditWord struct {
+		Memo     string `form:"memo" json:"memo"`
+		Count     string `form:"count" json:"count"`
+		Priority  string `form:"priority" json:"priority"`
 	}
 )
 
@@ -45,7 +55,7 @@ func create(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	if c.BindJSON(&json) == nil {
 		log.Infof(appengine.NewContext(c.Request), "post:%v", json)
-		db.AddWord(json.Text, c.Request)
+		db.AddWord(json, c.Request)
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
