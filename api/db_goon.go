@@ -129,6 +129,53 @@ func (db *wordDbGoon) AddWord(w PostWord, r *http.Request) (string, error) {
 	return key, nil
 }
 
+func (db *wordDbGoon) EditWord(id string, ew EditWord, r *http.Request) (Word, error) {
+
+	w, err := db.GetWord(id, r)
+	if err != nil {
+		c := appengine.NewContext(r)
+		log.Infof(c, "%v", err)
+		return Word{}, err
+	}
+
+	if (ew.Kind!="memo") {
+		ew.Memo = w.Memo
+	}
+	if (ew.Kind!="tag") {
+		ew.Tag = w.Tag
+	}
+	if (ew.Kind!="is_review") {
+		ew.IsReview = w.IsReview
+	}
+	if (ew.Kind!="is_input") {
+		ew.IsInput = w.IsInput
+	}
+
+
+	wg := WordGoon{
+		Id:      id,
+		Text: w.Text,
+		Memo: ew.Memo,
+		Tag: ew.Tag,
+		IsReview: ew.IsReview,
+		IsInput: ew.IsInput,
+		Count: ew.Count,
+		Priority: ew.Priority,
+		UpdatedAt: time.Now(),
+	}
+
+	g := goon.NewGoon(r)
+	if _, err := g.Put(&wg); err != nil {
+		c := appengine.NewContext(r)
+		log.Infof(c, "%v", err)
+		return Word{}, err
+	}
+
+	w2, err := db.GetWord(id, r)
+	return w2, err
+}
+
+
 func (db *wordDbGoon) Close() error {
 	return nil
 }
