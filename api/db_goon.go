@@ -74,12 +74,12 @@ func (db *wordDbGoon) GetAll(r *http.Request) ([]Word, error) {
 	g := goon.NewGoon(r)
 
 	words := []WordGoon{}
-
-	if _, err := g.GetAll(datastore.NewQuery("WordGoon"), &words); err != nil {
+	if _, err := g.GetAll(datastore.NewQuery("WordGoon")/*Filter("Done =", false)*/, &words); err != nil {
 		c := appengine.NewContext(r)
 		log.Infof(c, "%v", err)
 		return []Word{}, err
 	}
+
 
 	ws := []Word{}
 	for _, w := range words {

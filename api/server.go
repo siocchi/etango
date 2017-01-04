@@ -53,7 +53,19 @@ var (
 func words(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	if all, err := db.GetAll(c.Request); err == nil {
-		c.JSON(http.StatusOK, all)
+		if review := c.Query("is_review"); review!="" {
+			ws := []Word{}
+			for _, w := range all {
+				if review == "true" && w.IsReview {
+					ws = append(ws, w)
+				} else if review == "false" && !w.IsReview {
+						ws = append(ws, w)
+					}
+			}
+			c.JSON(http.StatusOK, ws)
+		} else {
+			c.JSON(http.StatusOK, all)
+		}
 	} else {
 		c.JSON(http.StatusInternalServerError, "error")
 	}
