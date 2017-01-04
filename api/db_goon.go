@@ -176,6 +176,21 @@ func (db *wordDbGoon) EditWord(id string, ew EditWord, r *http.Request) (Word, e
 }
 
 
+func (db *wordDbGoon) Delete(id string, r *http.Request) error {
+	g := goon.NewGoon(r)
+
+	w := new(WordGoon)
+	w.Id = id
+	key, err := g.KeyError(w)
+	if err != nil {
+		return err
+	}
+
+	err2 := g.Delete(key)
+	return err2
+}
+
+
 func (db *wordDbGoon) Close() error {
 	return nil
 }

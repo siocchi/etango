@@ -15,6 +15,8 @@ type WordDb interface {
 
 	EditWord(string, EditWord, *http.Request) (Word, error)
 
+	Delete(id string, r *http.Request) error
+
 	Close() error
 }
 
@@ -102,6 +104,19 @@ func edit(c *gin.Context) {
 	}
 }
 
+func delete(c *gin.Context) {
+	id := c.Param("id")
+
+	c.Header("Access-Control-Allow-Origin", "*")
+	err := db.Delete(id, c.Request)
+	if err != nil {
+		log.Debugf(appengine.NewContext(c.Request), "delete:%v", err)		
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error"})
+	} else {
+		c.JSON(http.StatusOK, gin.H{"status":"ok"})
+	}
+}
+
 
 func init() {
 	db = newDbGoon() // newDbMem()
@@ -119,9 +134,10 @@ func init() {
 	r.OPTIONS("/v1/word/:id/edit.json", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Headers", "Content-Type")
+		c.Header("Access-Control-Allow-Methods", "POST, DELETE, OPTIONS")
 	})
 	r.POST("/v1/word/:id/edit.json", edit)
-
+	r.DELETE("/v1/word/:id/edit.json", delete)
 
 	http.Handle("/v1/", r)
 }

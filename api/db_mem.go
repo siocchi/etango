@@ -71,6 +71,10 @@ func (db *wordDbMem) EditWord(id string, e EditWord, r *http.Request) (Word, err
 	return Word{}, nil
 }
 
+func (db *wordDbMem) Delete(id string, r *http.Request) error {
+	return nil
+}
+
 func (db *wordDbMem) Close() error {
 	return nil
 }
