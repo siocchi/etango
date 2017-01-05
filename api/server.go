@@ -53,6 +53,13 @@ var (
 )
 
 func words(c *gin.Context) {
+
+	profile := profileFromSession(c.Request)
+	if profile == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "parse error"})
+		return
+	}
+	
 	c.Header("Access-Control-Allow-Origin", "*")
 	if all, err := db.GetAll(c.Request); err == nil {
 		if review := c.Query("is_review"); review!="" {
@@ -76,12 +83,19 @@ func words(c *gin.Context) {
 func create(c *gin.Context) {
   var json PostWord
 	c.Header("Access-Control-Allow-Origin", "*")
+
+	profile := profileFromSession(c.Request)
+	if profile == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "parse error"})
+		return
+	}
+
 	if c.BindJSON(&json) == nil {
 		log.Debugf(appengine.NewContext(c.Request), "post:%v", json)
 		db.AddWord(json, c.Request)
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	} else {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "parse error"}) // 400
 	}
 }
 
@@ -90,9 +104,14 @@ func edit(c *gin.Context) {
 
 	id := c.Param("id")
 
+	profile := profileFromSession(c.Request)
+	if profile == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "parse error"})
+		return
+	}
+
 	c.Header("Access-Control-Allow-Origin", "*")
 	if c.BindJSON(&json) == nil {
-		log.Debugf(appengine.NewContext(c.Request), "edit:%v", json)
 		w, err := db.EditWord(id, json, c.Request)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"status": "error"})
@@ -100,19 +119,25 @@ func edit(c *gin.Context) {
 			c.JSON(http.StatusOK, w)
 		}
 	} else {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "parse error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "parse error"}) // 400
 	}
 }
 
 func delete(c *gin.Context) {
 	id := c.Param("id")
 
+	profile := profileFromSession(c.Request)
+	if profile == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "parse error"})
+		return
+	}
+
 	c.Header("Access-Control-Allow-Origin", "*")
 	err := db.Delete(id, c.Request)
 	if err != nil {
-		log.Debugf(appengine.NewContext(c.Request), "delete:%v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error"})
 	} else {
+		log.Debugf(appengine.NewContext(c.Request), "delete:%v", id)
 		c.JSON(http.StatusOK, gin.H{"status":"ok"})
 	}
 }
@@ -138,6 +163,11 @@ func init() {
 	})
 	r.POST("/v1/word/:id/edit.json", edit)
 	r.DELETE("/v1/word/:id/edit.json", delete)
+
+
+	http.HandleFunc("/v1/login", loginHandler)
+	http.HandleFunc("/v1/logout", logoutHandler)
+	http.HandleFunc("/v1/oauth2callback", oauthCallbackHandler)
 
 	http.Handle("/v1/", r)
 }
