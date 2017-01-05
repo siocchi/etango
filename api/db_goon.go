@@ -16,7 +16,7 @@ import (
 
 type WordGoon struct {
 	Id    string 	`datastore:"-" goon:"id"`
-	Uid    string 	`datastore:"uid" goon:"uid"`
+	Uid  *datastore.Key `datastore:"-" goon:"parent"`
 	Text string	`datastore:"text"`
 	Memo string `datastore:"memo"`
 	Tag	 string `datastore:"tag"`
@@ -27,6 +27,9 @@ type WordGoon struct {
 	UpdatedAt time.Time `datastore:"updated_at"`
 }
 
+type ProfileGoon struct {
+	Uid string `datastore:"-" goon:"id"`
+}
 
 type wordDbGoon struct {
 	goon string
@@ -36,7 +39,7 @@ func init() {
 
 }
 // var _ LinkDb = &linkDbCloud{}
-var check_uid = false
+var check_uid = true
 
 func newDbGoon() *wordDbGoon {
 	return &wordDbGoon{goon: ""}
@@ -54,13 +57,19 @@ func (db *wordDbGoon) GetWord(key string, uid string, r *http.Request) (Word, er
 		return Word{}, err
 	}
 
-	if check_uid && w.Uid != uid {
+	pkey := ProfileGoon{Uid: uid}
+	uid_key, err := g.Put(&pkey)
+	if err != nil {
+		log.Debugf(appengine.NewContext(r), "%v", err)
+		return Word{}, err
+	}
+
+	if check_uid && w.Uid != uid_key {
 		return Word{}, errors.New("uid invalid")
 	}
 
 	v := Word{
 		Id: key,
-		Uid: uid,
 		Text: w.Text,
 		Memo: w.Memo,
 		Tag: w.Tag,
@@ -77,19 +86,26 @@ func (db *wordDbGoon) GetWord(key string, uid string, r *http.Request) (Word, er
 func (db *wordDbGoon) GetAll(uid string, r *http.Request) ([]Word, error) {
 	g := goon.NewGoon(r)
 
+	pkey := ProfileGoon{Uid: uid}
+	uid_key, err := g.Put(&pkey)
+	if err != nil {
+		log.Debugf(appengine.NewContext(r), "%v", err)
+		return []Word{}, err
+	}
+	log.Debugf(appengine.NewContext(r), "%v", uid_key)
+
+
 	words := []WordGoon{}
-	if _, err := g.GetAll(datastore.NewQuery("WordGoon")/*.Filter("Uid =", uid)*/, &words); err != nil {
+	if _, err := g.GetAll(datastore.NewQuery("WordGoon").Ancestor(uid_key), &words); err != nil {
 		c := appengine.NewContext(r)
 		log.Infof(c, "%v", err)
 		return []Word{}, err
 	}
 
-
 	ws := []Word{}
 	for _, w := range words {
 		v := Word{
 			Id: w.Id,
-			Uid: w.Uid,
 			Text: w.Text,
 			Memo: w.Memo,
 			Tag: w.Tag,
@@ -118,9 +134,17 @@ func (db *wordDbGoon) AddWord(uid string, w PostWord, r *http.Request) (string, 
 	}
 	key := replaced + "_" + string(uuid.String()[0:5])
 
+	g := goon.NewGoon(r)
+	pkey := ProfileGoon{Uid: uid}
+	uid_key, err := g.Put(&pkey)
+	if err != nil {
+		log.Debugf(appengine.NewContext(r), "%v", err)
+		return "", err
+	}
+
 	wg := WordGoon{
 		Id:      key,
-		Uid:		uid,
+		Uid:		uid_key,
 		Text: w.Text,
 		Memo: "",
 		Tag: "",
@@ -131,7 +155,6 @@ func (db *wordDbGoon) AddWord(uid string, w PostWord, r *http.Request) (string, 
 		UpdatedAt: time.Now(),
 	}
 
-	g := goon.NewGoon(r)
 	if _, err := g.Put(&wg); err != nil {
 		c := appengine.NewContext(r)
 		log.Infof(c, "%v", err)
@@ -146,14 +169,24 @@ func (db *wordDbGoon) AddWord(uid string, w PostWord, r *http.Request) (string, 
 
 func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Request) (Word, error) {
 
-	w, err := db.GetWord(id, uid, r)
+	g := goon.NewGoon(r)
+
+	pkey := ProfileGoon{Uid: uid}
+	uid_key, err := g.Put(&pkey)
 	if err != nil {
-		c := appengine.NewContext(r)
-		log.Infof(c, "%v", err)
+		log.Debugf(appengine.NewContext(r), "%v", err)
 		return Word{}, err
 	}
 
-	if check_uid && w.Uid != uid {
+	w := new(WordGoon)
+	w.Id = id
+	w.Uid = uid_key
+	if err := g.Get(w); err != nil {
+		log.Debugf(appengine.NewContext(r), "%v", err)
+		return Word{},err
+	}
+
+	if check_uid && w.Uid != uid_key {
 		return Word{}, errors.New("uid invalid")
 	}
 
@@ -172,7 +205,7 @@ func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Reque
 
 	wg := WordGoon{
 		Id:      id,
-		Uid:		uid,
+		Uid:		uid_key,
 		Text: w.Text,
 		Memo: ew.Memo,
 		Tag: ew.Tag,
@@ -183,7 +216,6 @@ func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Reque
 		UpdatedAt: time.Now(),
 	}
 
-	g := goon.NewGoon(r)
 	if _, err := g.Put(&wg); err != nil {
 		c := appengine.NewContext(r)
 		log.Infof(c, "%v", err)
@@ -198,19 +230,28 @@ func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Reque
 func (db *wordDbGoon) Delete(id string, uid string, r *http.Request) error {
 	g := goon.NewGoon(r)
 
-	w, err := db.GetWord(id, uid, r)
+	pkey := ProfileGoon{Uid: uid}
+	uid_key, err := g.Put(&pkey)
 	if err != nil {
-		c := appengine.NewContext(r)
-		log.Infof(c, "%v", err)
+		log.Debugf(appengine.NewContext(r), "uid:%v", err)
 		return err
 	}
 
-	if check_uid && w.Uid != uid {
+	w := new(WordGoon)
+	w.Id = id
+	w.Uid = uid_key
+	if err := g.Get(w); err != nil {
+		log.Debugf(appengine.NewContext(r), "%v", err)
+		return err
+	}
+
+	if check_uid && w.Uid != uid_key {
 		return errors.New("uid invalid")
 	}
 
 	wkey := new(WordGoon)
 	wkey.Id = id
+	wkey.Uid = uid_key
 	key, err := g.KeyError(wkey)
 	if err != nil {
 		return err

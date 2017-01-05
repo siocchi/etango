@@ -23,7 +23,6 @@ type WordDb interface {
 type (
 	Word struct {
 		Id    string 	`json:"id"`
-		Uid    string
 		Text string	`json:"text"`
 		Memo string `json:"memo"`
 		Tag	 string `json:"tag"`
