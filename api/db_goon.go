@@ -3,15 +3,14 @@
 package main
 
 import (
-	"strconv"
-	"fmt"
 	"time"
-	"sync/atomic"
 	"net/http"
 	"github.com/mjibson/goon"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
+	 "github.com/google/uuid"
+	 "regexp"
 )
 
 type WordGoon struct {
@@ -30,8 +29,9 @@ type WordGoon struct {
 type wordDbGoon struct {
 	goon string
 }
-var counter32 int32 = 0
 
+func init() {
+}
 // var _ LinkDb = &linkDbCloud{}
 
 func newDbGoon() *wordDbGoon {
@@ -50,13 +50,8 @@ func (db *wordDbGoon) GetWord(key string, r *http.Request) (Word, error) {
 		return Word{}, err
 	}
 
-	ikey, err := strconv.Atoi(key)
-	if err!=nil {
-			return Word{}, err
-	}
-
 	v := Word{
-		Id: ikey,
+		Id: key,
 		Text: w.Text,
 		Memo: w.Memo,
 		Tag: w.Tag,
@@ -83,12 +78,8 @@ func (db *wordDbGoon) GetAll(r *http.Request) ([]Word, error) {
 
 	ws := []Word{}
 	for _, w := range words {
-		ikey, err := strconv.Atoi(w.Id)
-		if err!=nil {
-				return ws, nil
-		}
 		v := Word{
-			Id: ikey,
+			Id: w.Id,
 			Text: w.Text,
 			Memo: w.Memo,
 			Tag: w.Tag,
@@ -106,8 +97,20 @@ func (db *wordDbGoon) GetAll(r *http.Request) ([]Word, error) {
 
 func (db *wordDbGoon) AddWord(w PostWord, r *http.Request) (string, error) {
 
-	ikey := atomic.AddInt32(&counter32, 1)
-	key := fmt.Sprint(ikey)
+  reg, _ := regexp.Compile("/ /")
+  replaced := reg.ReplaceAllString(w.Text, "_")
+
+	uuid, err1 := uuid.NewUUID()
+ 	if err1 != nil {
+		c := appengine.NewContext(r)
+    log.Infof(c, "%v", err1)
+		return "", err1
+	}
+	key := replaced + "_" + string(uuid.String()[0:5])
+	c := appengine.NewContext(r)
+	log.Debugf(c, "%v", key)
+
+
 	wg := WordGoon{
 		Id:      key,
 		Text: w.Text,

@@ -22,7 +22,7 @@ type WordDb interface {
 
 type (
 	Word struct {
-		Id    int 	`json:"id"`
+		Id    string 	`json:"id"`
 		Text string	`json:"text"`
 		Memo string `json:"memo"`
 		Tag	 string `json:"tag"`
@@ -110,7 +110,7 @@ func delete(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	err := db.Delete(id, c.Request)
 	if err != nil {
-		log.Debugf(appengine.NewContext(c.Request), "delete:%v", err)		
+		log.Debugf(appengine.NewContext(c.Request), "delete:%v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error"})
 	} else {
 		c.JSON(http.StatusOK, gin.H{"status":"ok"})

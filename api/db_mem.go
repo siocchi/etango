@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"sync/atomic"
 	"fmt"
-	"strconv"
 	"time"
 )
 
@@ -25,12 +24,8 @@ func newDbMem() *wordDbMem {
 func values(m map[string]Word) []Word {
     vs := []Word{}
     for i, w := range m {
-			ii, err := strconv.Atoi(i)
-			if err!=nil {
-					return vs
-			}
 			v := Word{
-				Id: ii,
+				Id: i,
 				Text: w.Text,
 				Memo: w.Memo,
 				Tag: w.Tag,
@@ -54,7 +49,7 @@ func (db *wordDbMem) AddWord(w PostWord, r *http.Request) (string, error) {
 	ikey := atomic.AddInt32(&counter, 1)
 	key := fmt.Sprint(ikey)
 	db.words[key] = Word{
-		Id: 0,
+		Id: key,
 		Text: w.Text,
 		Memo: "",
 		Tag: "",
