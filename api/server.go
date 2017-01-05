@@ -136,6 +136,7 @@ func delete(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	err := db.Delete(id, profile.ID, c.Request)
 	if err != nil {
+		log.Debugf(appengine.NewContext(c.Request), "delete error:%v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error"})
 	} else {
 		log.Debugf(appengine.NewContext(c.Request), "delete:%v", id)
@@ -143,6 +144,15 @@ func delete(c *gin.Context) {
 	}
 }
 
+func profile(c *gin.Context) {
+	profile := profileFromSession(c.Request)
+	if profile == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "parse error"})
+		return
+	} else {
+		c.JSON(http.StatusOK, gin.H{"image_url": profile.ImageURL, "screen_name": profile.DisplayName})
+	}
+}
 
 func init() {
 	db = newDbGoon() // newDbMem()
@@ -165,6 +175,7 @@ func init() {
 	r.POST("/v1/word/:id/edit.json", edit)
 	r.DELETE("/v1/word/:id/edit.json", delete)
 
+	r.GET("/v1/profile.json", profile)
 
 	http.HandleFunc("/v1/login", loginHandler)
 	http.HandleFunc("/v1/logout", logoutHandler)
