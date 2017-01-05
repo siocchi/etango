@@ -9,13 +9,13 @@ import (
 )
 
 type WordDb interface {
-	GetAll(*http.Request) ([]Word, error)
+	GetAll(string, *http.Request) ([]Word, error)
 
-	AddWord(PostWord, *http.Request) (string, error)
+	AddWord(string, PostWord, *http.Request) (string, error)
 
-	EditWord(string, EditWord, *http.Request) (Word, error)
+	EditWord(string, string, EditWord, *http.Request) (Word, error)
 
-	Delete(id string, r *http.Request) error
+	Delete(string, string, *http.Request) error
 
 	Close() error
 }
@@ -23,6 +23,7 @@ type WordDb interface {
 type (
 	Word struct {
 		Id    string 	`json:"id"`
+		Uid    string
 		Text string	`json:"text"`
 		Memo string `json:"memo"`
 		Tag	 string `json:"tag"`
@@ -59,9 +60,9 @@ func words(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "parse error"})
 		return
 	}
-	
+
 	c.Header("Access-Control-Allow-Origin", "*")
-	if all, err := db.GetAll(c.Request); err == nil {
+	if all, err := db.GetAll(profile.ID, c.Request); err == nil {
 		if review := c.Query("is_review"); review!="" {
 			ws := []Word{}
 			for _, w := range all {
@@ -92,7 +93,7 @@ func create(c *gin.Context) {
 
 	if c.BindJSON(&json) == nil {
 		log.Debugf(appengine.NewContext(c.Request), "post:%v", json)
-		db.AddWord(json, c.Request)
+		db.AddWord(profile.ID, json, c.Request)
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "parse error"}) // 400
@@ -112,7 +113,7 @@ func edit(c *gin.Context) {
 
 	c.Header("Access-Control-Allow-Origin", "*")
 	if c.BindJSON(&json) == nil {
-		w, err := db.EditWord(id, json, c.Request)
+		w, err := db.EditWord(id, profile.ID, json, c.Request)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"status": "error"})
 		} else {
@@ -133,7 +134,7 @@ func delete(c *gin.Context) {
 	}
 
 	c.Header("Access-Control-Allow-Origin", "*")
-	err := db.Delete(id, c.Request)
+	err := db.Delete(id, profile.ID, c.Request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error"})
 	} else {

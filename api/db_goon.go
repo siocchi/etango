@@ -11,10 +11,12 @@ import (
 	"google.golang.org/appengine/datastore"
 	 "github.com/google/uuid"
 	 "regexp"
+	 "errors"
 )
 
 type WordGoon struct {
 	Id    string 	`datastore:"-" goon:"id"`
+	Uid    string 	`datastore:"uid" goon:"uid"`
 	Text string	`datastore:"text"`
 	Memo string `datastore:"memo"`
 	Tag	 string `datastore:"tag"`
@@ -31,14 +33,16 @@ type wordDbGoon struct {
 }
 
 func init() {
+
 }
 // var _ LinkDb = &linkDbCloud{}
+var check_uid = false
 
 func newDbGoon() *wordDbGoon {
 	return &wordDbGoon{goon: ""}
 }
 
-func (db *wordDbGoon) GetWord(key string, r *http.Request) (Word, error) {
+func (db *wordDbGoon) GetWord(key string, uid string, r *http.Request) (Word, error) {
 	g := goon.NewGoon(r)
 
 	w := new(WordGoon)
@@ -50,8 +54,13 @@ func (db *wordDbGoon) GetWord(key string, r *http.Request) (Word, error) {
 		return Word{}, err
 	}
 
+	if check_uid && w.Uid != uid {
+		return Word{}, errors.New("uid invalid")
+	}
+
 	v := Word{
 		Id: key,
+		Uid: uid,
 		Text: w.Text,
 		Memo: w.Memo,
 		Tag: w.Tag,
@@ -65,11 +74,11 @@ func (db *wordDbGoon) GetWord(key string, r *http.Request) (Word, error) {
 	return v, nil
 }
 
-func (db *wordDbGoon) GetAll(r *http.Request) ([]Word, error) {
+func (db *wordDbGoon) GetAll(uid string, r *http.Request) ([]Word, error) {
 	g := goon.NewGoon(r)
 
 	words := []WordGoon{}
-	if _, err := g.GetAll(datastore.NewQuery("WordGoon")/*Filter("Done =", false)*/, &words); err != nil {
+	if _, err := g.GetAll(datastore.NewQuery("WordGoon")/*.Filter("Uid =", uid)*/, &words); err != nil {
 		c := appengine.NewContext(r)
 		log.Infof(c, "%v", err)
 		return []Word{}, err
@@ -80,6 +89,7 @@ func (db *wordDbGoon) GetAll(r *http.Request) ([]Word, error) {
 	for _, w := range words {
 		v := Word{
 			Id: w.Id,
+			Uid: w.Uid,
 			Text: w.Text,
 			Memo: w.Memo,
 			Tag: w.Tag,
@@ -95,7 +105,7 @@ func (db *wordDbGoon) GetAll(r *http.Request) ([]Word, error) {
 	return ws, nil
 }
 
-func (db *wordDbGoon) AddWord(w PostWord, r *http.Request) (string, error) {
+func (db *wordDbGoon) AddWord(uid string, w PostWord, r *http.Request) (string, error) {
 
   reg, _ := regexp.Compile("/ /")
   replaced := reg.ReplaceAllString(w.Text, "_")
@@ -107,12 +117,10 @@ func (db *wordDbGoon) AddWord(w PostWord, r *http.Request) (string, error) {
 		return "", err1
 	}
 	key := replaced + "_" + string(uuid.String()[0:5])
-	c := appengine.NewContext(r)
-	log.Debugf(c, "%v", key)
-
 
 	wg := WordGoon{
 		Id:      key,
+		Uid:		uid,
 		Text: w.Text,
 		Memo: "",
 		Tag: "",
@@ -129,16 +137,24 @@ func (db *wordDbGoon) AddWord(w PostWord, r *http.Request) (string, error) {
 		log.Infof(c, "%v", err)
 		return "", err
 	}
+	c := appengine.NewContext(r)
+	log.Infof(c, "%v", wg)
+
+
 	return key, nil
 }
 
-func (db *wordDbGoon) EditWord(id string, ew EditWord, r *http.Request) (Word, error) {
+func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Request) (Word, error) {
 
-	w, err := db.GetWord(id, r)
+	w, err := db.GetWord(id, uid, r)
 	if err != nil {
 		c := appengine.NewContext(r)
 		log.Infof(c, "%v", err)
 		return Word{}, err
+	}
+
+	if check_uid && w.Uid != uid {
+		return Word{}, errors.New("uid invalid")
 	}
 
 	if (ew.Kind!="memo") {
@@ -154,9 +170,9 @@ func (db *wordDbGoon) EditWord(id string, ew EditWord, r *http.Request) (Word, e
 		ew.IsInput = w.IsInput
 	}
 
-
 	wg := WordGoon{
 		Id:      id,
+		Uid:		uid,
 		Text: w.Text,
 		Memo: ew.Memo,
 		Tag: ew.Tag,
@@ -174,17 +190,28 @@ func (db *wordDbGoon) EditWord(id string, ew EditWord, r *http.Request) (Word, e
 		return Word{}, err
 	}
 
-	w2, err := db.GetWord(id, r)
+	w2, err := db.GetWord(id, uid, r)
 	return w2, err
 }
 
 
-func (db *wordDbGoon) Delete(id string, r *http.Request) error {
+func (db *wordDbGoon) Delete(id string, uid string, r *http.Request) error {
 	g := goon.NewGoon(r)
 
-	w := new(WordGoon)
-	w.Id = id
-	key, err := g.KeyError(w)
+	w, err := db.GetWord(id, uid, r)
+	if err != nil {
+		c := appengine.NewContext(r)
+		log.Infof(c, "%v", err)
+		return err
+	}
+
+	if check_uid && w.Uid != uid {
+		return errors.New("uid invalid")
+	}
+
+	wkey := new(WordGoon)
+	wkey.Id = id
+	key, err := g.KeyError(wkey)
 	if err != nil {
 		return err
 	}
