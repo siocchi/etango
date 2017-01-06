@@ -56,7 +56,7 @@ func words(c *gin.Context) {
 
 	profile := profileFromSession(c.Request)
 	if profile == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "parse error"})
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
 	}
 
@@ -76,7 +76,7 @@ func words(c *gin.Context) {
 			c.JSON(http.StatusOK, all)
 		}
 	} else {
-		c.JSON(http.StatusInternalServerError, "error")
+		c.JSON(http.StatusBadRequest, "error")
 	}
 }
 
@@ -86,7 +86,7 @@ func create(c *gin.Context) {
 
 	profile := profileFromSession(c.Request)
 	if profile == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "parse error"})
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
 	}
 
@@ -95,7 +95,7 @@ func create(c *gin.Context) {
 		db.AddWord(profile.ID, json, c.Request)
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "parse error"}) // 400
+		c.JSON(http.StatusBadRequest, gin.H{"status": "parse error"})
 	}
 }
 
@@ -106,7 +106,7 @@ func edit(c *gin.Context) {
 
 	profile := profileFromSession(c.Request)
 	if profile == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "parse error"})
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
 	}
 
@@ -114,12 +114,12 @@ func edit(c *gin.Context) {
 	if c.BindJSON(&json) == nil {
 		w, err := db.EditWord(id, profile.ID, json, c.Request)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"status": "error"})
+			c.JSON(http.StatusBadRequest, gin.H{"status": "something wrong"})
 		} else {
 			c.JSON(http.StatusOK, w)
 		}
 	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "parse error"}) // 400
+		c.JSON(http.StatusBadRequest, gin.H{"status": "parse error"})
 	}
 }
 
@@ -128,7 +128,7 @@ func delete(c *gin.Context) {
 
 	profile := profileFromSession(c.Request)
 	if profile == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "parse error"})
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
 	}
 
@@ -136,7 +136,7 @@ func delete(c *gin.Context) {
 	err := db.Delete(id, profile.ID, c.Request)
 	if err != nil {
 		log.Debugf(appengine.NewContext(c.Request), "delete error:%v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "error"})
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error"})
 	} else {
 		log.Debugf(appengine.NewContext(c.Request), "delete:%v", id)
 		c.JSON(http.StatusOK, gin.H{"status":"ok"})
@@ -146,7 +146,7 @@ func delete(c *gin.Context) {
 func profile(c *gin.Context) {
 	profile := profileFromSession(c.Request)
 	if profile == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "parse error"})
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
 	} else {
 		c.JSON(http.StatusOK, gin.H{"image_url": profile.ImageURL, "screen_name": profile.DisplayName})
