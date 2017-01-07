@@ -30,6 +30,7 @@ const (
 var (
 	OAuthConfig *oauth2.Config
 	SessionStore sessions.Store
+	super_user bool = true
 )
 
 func init() {
@@ -169,6 +170,14 @@ func logoutHandler(w http.ResponseWriter, r *http.Request)  {
 }
 
 func profileFromSession(r *http.Request) *Profile {
+	if super_user {
+		return &Profile{
+			ID: "0",
+			DisplayName: "Super User",
+			ImageURL: "",
+		}
+	}
+
 	session, err := SessionStore.Get(r, defaultSessionID)
 	if err != nil {
 		return nil
