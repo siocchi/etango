@@ -31,6 +31,7 @@ type (
 		Count int	 `json:"count"`
 		Priority int `json:"priority"`
 		UpdatedAt time.Time `json:"updated_at"`
+		ReviewedAt time.Time `json:"reviewed_at"`
 	}
 
 	PostWord struct {
@@ -45,6 +46,7 @@ type (
 		IsInput bool `json:"is_input"`
 		Count     int `form:"count" json:"count"`
 		Priority  int `form:"priority" json:"priority"`
+		ReviewedAt time.Time `json:"reviewed_at"`
 	}
 )
 

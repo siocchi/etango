@@ -25,6 +25,7 @@ type WordGoon struct {
 	Count int	 `datastore:"count"`
 	Priority int `datastore:"priority"`
 	UpdatedAt time.Time `datastore:"updated_at"`
+	ReviewedAt time.Time `datastore:"reviewed_at"`
 }
 
 type ProfileGoon struct {
@@ -88,6 +89,7 @@ func (db *wordDbGoon) GetWord(key string, uid string, r *http.Request) (Word, er
 		Count: w.Count,
 		Priority: w.Priority,
 		UpdatedAt: w.UpdatedAt,
+		ReviewedAt: w.ReviewedAt,
 	}
 
 	return v, nil
@@ -121,6 +123,7 @@ func (db *wordDbGoon) GetAll(uid string, r *http.Request) ([]Word, error) {
 			Count: w.Count,
 			Priority: w.Priority,
 			UpdatedAt: w.UpdatedAt,
+			ReviewedAt: w.ReviewedAt,
 		}
 		ws = append(ws, v)
 	}
@@ -153,13 +156,14 @@ func (db *wordDbGoon) AddWord(uid string, w PostWord, r *http.Request) (string, 
 		Id:   key,
 		Uid:  uid_key,
 		Text: w.Text,
-		Memo: "memo",
+		Memo: "",
 		Tag:  "",
 		IsReview: true,
 		IsInput: true,
 		Count: 0,
 		Priority: 0,
 		UpdatedAt: time.Now(),
+		ReviewedAt: time.Now(),
 	}
 
 	if _, err := g.Put(&wg); err != nil {
@@ -208,6 +212,11 @@ func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Reque
 	if (ew.Kind!="is_input") {
 		ew.IsInput = w.IsInput
 	}
+	if (ew.Kind!="reviewed_at") {
+		ew.ReviewedAt = w.ReviewedAt
+	} else {
+		ew.ReviewedAt = time.Now()
+	}
 
 	wg := WordGoon{
 		Id:   id,
@@ -220,15 +229,16 @@ func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Reque
 		Count: ew.Count,
 		Priority: ew.Priority,
 		UpdatedAt: time.Now(),
+		ReviewedAt: ew.ReviewedAt,
 	}
 
 	if _, err := g.Put(&wg); err != nil {
-		c := appengine.NewContext(r)
-		log.Debugf(c, "%v", err)
+		log.Debugf(appengine.NewContext(r), "%v", err)
 		return Word{}, err
 	}
 
 	w2, err := db.GetWord(id, uid, r)
+	log.Debugf(appengine.NewContext(r), "updated:%v", w2)
 	return w2, err
 }
 
