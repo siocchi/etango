@@ -151,6 +151,8 @@ func profile(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
 	} else {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Headers", "Content-Type")
 		c.JSON(http.StatusOK, gin.H{"image_url": profile.ImageURL, "screen_name": profile.DisplayName})
 	}
 }
