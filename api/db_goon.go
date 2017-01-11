@@ -94,7 +94,7 @@ func (db *wordDbGoon) GetWord(key string, uid string, r *http.Request) (Word, er
 	return v, nil
 }
 
-func (db *wordDbGoon) GetAll(uid string, r *http.Request) ([]Word, error) {
+func (db *wordDbGoon) GetAll(uid string, is_review bool, r *http.Request) ([]Word, error) {
 	g := goon.NewGoon(r)
 
 	uid_key, err := db.GetProfileKey(uid, r)
@@ -103,8 +103,13 @@ func (db *wordDbGoon) GetAll(uid string, r *http.Request) ([]Word, error) {
 		return []Word{}, err
 	}
 
+	filter := datastore.NewQuery("WordGoon").Ancestor(uid_key)
+	if (is_review) {
+		filter = filter.Filter("is_review =", true)
+	}
+
 	words := []WordGoon{}
-	if _, err := g.GetAll(datastore.NewQuery("WordGoon").Ancestor(uid_key), &words); err != nil {
+	if _, err := g.GetAll(filter, &words); err != nil {
 		log.Debugf(appengine.NewContext(r), "%v", err)
 		return []Word{}, err
 	}
