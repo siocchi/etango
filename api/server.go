@@ -9,7 +9,7 @@ import (
 )
 
 type WordDb interface {
-	GetAll(string, bool, *http.Request) ([]Word, error)
+	GetAll(string, bool, string, *http.Request) ([]Word, error)
 
 	AddWord(string, PostWord, *http.Request) (string, error)
 
@@ -62,9 +62,10 @@ func words(c *gin.Context) {
 		return
 	}
 	is_review := c.Query("is_review") == "true";
+	duration := c.Query("duration");
 
 	c.Header("Access-Control-Allow-Origin", "*")
-	if all, err := db.GetAll(profile.ID, is_review, c.Request); err == nil {
+	if all, err := db.GetAll(profile.ID, is_review, duration, c.Request); err == nil {
 		c.JSON(http.StatusOK, all)
 	} else {
 		c.JSON(http.StatusBadRequest, "error")
