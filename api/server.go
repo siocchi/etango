@@ -70,8 +70,8 @@ func words(c *gin.Context) {
 				if review == "true" && w.IsReview {
 					ws = append(ws, w)
 				} else if review == "false" && !w.IsReview {
-						ws = append(ws, w)
-					}
+					ws = append(ws, w)
+				}
 			}
 			c.JSON(http.StatusOK, ws)
 		} else {
@@ -83,7 +83,7 @@ func words(c *gin.Context) {
 }
 
 func create(c *gin.Context) {
-  var json PostWord
+	var json PostWord
 	c.Header("Access-Control-Allow-Origin", "*")
 
 	profile := profileFromSession(c.Request)
@@ -102,7 +102,7 @@ func create(c *gin.Context) {
 }
 
 func edit(c *gin.Context) {
-  var json EditWord
+	var json EditWord
 
 	id := c.Param("id")
 

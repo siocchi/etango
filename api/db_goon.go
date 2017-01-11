@@ -9,9 +9,9 @@ import (
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
-	 "github.com/google/uuid"
-	 "regexp"
-	 "errors"
+	"github.com/google/uuid"
+	"regexp"
+	"errors"
 )
 
 type WordGoon struct {
@@ -133,13 +133,13 @@ func (db *wordDbGoon) GetAll(uid string, r *http.Request) ([]Word, error) {
 
 func (db *wordDbGoon) AddWord(uid string, w PostWord, r *http.Request) (string, error) {
 
-  reg, _ := regexp.Compile("/ /")
-  replaced := reg.ReplaceAllString(w.Text, "_")
+	reg, _ := regexp.Compile("/ /")
+	replaced := reg.ReplaceAllString(w.Text, "_")
 
 	uuid, err1 := uuid.NewUUID()
 	if err1 != nil {
 		c := appengine.NewContext(r)
-    log.Infof(c, "%v", err1)
+		log.Infof(c, "%v", err1)
 		return "", err1
 	}
 	key := replaced + "_" + string(uuid.String()[0:5])
@@ -193,7 +193,7 @@ func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Reque
 	w.Uid = uid_key
 	if err := g.Get(w); err != nil {
 		log.Debugf(appengine.NewContext(r), "edit:%v", err)
-		return Word{},err
+		return Word{}, err
 	}
 
 	if check_uid && w.Uid != uid_key {

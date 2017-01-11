@@ -50,10 +50,10 @@ func init() {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request)  {
-  uuid, err1 := uuid.NewUUID()
- 	if err1 != nil {
+	uuid, err1 := uuid.NewUUID()
+	if err1 != nil {
 		c := appengine.NewContext(r)
-    log.Infof(c, "%v", err1)
+		log.Infof(c, "%v", err1)
 	}
 	sessionID := uuid.String()
 
@@ -104,27 +104,27 @@ func oauthCallbackHandler(w http.ResponseWriter, r *http.Request) /* *appError *
 	redirectURL, ok := oauthFlowSession.Values[oauthFlowRedirectKey].(string)
 	if !ok {
 		log.Infof(ctx, "invalid state parameter. try logging in again. 2")
-    return
+		return
 	}
 
 	code := r.FormValue("code")
 	tok, err := OAuthConfig.Exchange(ctx, code)
 	if err != nil {
 		log.Infof(ctx, "could not get auth token: %v", err)
-    return
+		return
 	}
 
 	session, err := SessionStore.New(r, defaultSessionID)
 	if err != nil {
 		log.Infof(ctx, "could not get default session: %v", err)
-    return
+		return
 	}
 
 	profile, err := fetchProfile(ctx, tok)
 	if err != nil {
 		log.Infof(ctx, "could not fetch Google profile: %v", err)
-    return
-  }
+		return
+	}
 
 	session.Values[oauthTokenSessionKey] = tok
 	stripped := stripProfile(profile)
@@ -133,7 +133,7 @@ func oauthCallbackHandler(w http.ResponseWriter, r *http.Request) /* *appError *
 	session.Values[googleProfileSessionKey] = stripped
 	if err := session.Save(r, w); err != nil {
 		log.Infof(ctx, "could not save session: %v", err)
-    return
+		return
 	}
 
 	http.Redirect(w, r, redirectURL, http.StatusFound)
@@ -148,18 +148,17 @@ func fetchProfile(ctx context.Context, tok *oauth2.Token) (*plus.Person, error) 
 	return plusService.People.Get("me").Do()
 }
 
-// logoutHandler clears the default session.
 func logoutHandler(w http.ResponseWriter, r *http.Request)  {
-  ctx := appengine.NewContext(r)
+	ctx := appengine.NewContext(r)
 
 	session, err := SessionStore.New(r, defaultSessionID)
 	if err != nil {
-    log.Infof(ctx, "could not get default session: %v", err)
-    return
+		log.Infof(ctx, "could not get default session: %v", err)
+		return
 	}
 	session.Options.MaxAge = -1 // Clear session.
 	if err := session.Save(r, w); err != nil {
-    log.Infof(ctx, "could not save session: %v", err)
+		log.Infof(ctx, "could not save session: %v", err)
 		return
 	}
 	redirectURL := r.FormValue("redirect")
