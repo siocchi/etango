@@ -70,8 +70,7 @@ func (db *wordDbGoon) GetWord(key string, uid string, r *http.Request) (Word, er
 	w.Uid = uid_key
 
 	if err := g.Get(w); err != nil {
-		c := appengine.NewContext(r)
-		log.Infof(c, "%v", err)
+		log.Debugf(appengine.NewContext(r), "%v", err)
 		return Word{}, err
 	}
 
@@ -106,8 +105,7 @@ func (db *wordDbGoon) GetAll(uid string, r *http.Request) ([]Word, error) {
 
 	words := []WordGoon{}
 	if _, err := g.GetAll(datastore.NewQuery("WordGoon").Ancestor(uid_key), &words); err != nil {
-		c := appengine.NewContext(r)
-		log.Infof(c, "%v", err)
+		log.Debugf(appengine.NewContext(r), "%v", err)
 		return []Word{}, err
 	}
 
@@ -138,8 +136,7 @@ func (db *wordDbGoon) AddWord(uid string, w PostWord, r *http.Request) (string, 
 
 	uuid, err1 := uuid.NewUUID()
 	if err1 != nil {
-		c := appengine.NewContext(r)
-		log.Infof(c, "%v", err1)
+		log.Debugf(appengine.NewContext(r), "%v", err1)
 		return "", err1
 	}
 	key := replaced + "_" + string(uuid.String()[0:5])
@@ -167,12 +164,10 @@ func (db *wordDbGoon) AddWord(uid string, w PostWord, r *http.Request) (string, 
 	}
 
 	if _, err := g.Put(&wg); err != nil {
-		c := appengine.NewContext(r)
-		log.Infof(c, "%v", err)
+		log.Debugf(appengine.NewContext(r), "%v", err)
 		return "", err
 	}
-	c := appengine.NewContext(r)
-	log.Infof(c, "%v", wg)
+	log.Debugf(appengine.NewContext(r), "%v", wg)
 
 
 	return key, nil
