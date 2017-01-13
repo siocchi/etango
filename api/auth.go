@@ -30,7 +30,7 @@ const (
 var (
 	OAuthConfig *oauth2.Config
 	SessionStore sessions.Store
-	super_user bool = true
+	super_user bool = false
 )
 
 func init() {
