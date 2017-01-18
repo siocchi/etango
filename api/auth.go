@@ -30,7 +30,7 @@ const (
 var (
 	OAuthConfig *oauth2.Config
 	SessionStore sessions.Store
-	super_user bool = false
+	SuperUser bool
 )
 
 func init() {
@@ -39,6 +39,7 @@ func init() {
 
 	clientId := os.Getenv("CLIENT_ID")
 	clientSecret := os.Getenv("CLIENT_SECRET")
+	SuperUser = os.Getenv("USE_SUPER_USER") != ""
 
 	OAuthConfig = configureOAuthClient(clientId, clientSecret)
 
@@ -169,7 +170,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request)  {
 }
 
 func profileFromSession(r *http.Request) *Profile {
-	if super_user {
+	if SuperUser {
 		return &Profile{
 			ID: "0",
 			DisplayName: "Super User",
