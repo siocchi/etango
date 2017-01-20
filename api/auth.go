@@ -23,7 +23,6 @@ const (
 	defaultSessionID = "default"
 	googleProfileSessionKey = "google_profile"
 	oauthTokenSessionKey    = "oauth_token"
-
 	oauthFlowRedirectKey = "redirect"
 )
 
