@@ -17,6 +17,8 @@ type WordDb interface {
 
 	Delete(string, string, *http.Request) error
 
+	SignUp(string, string, *http.Request) error
+
 	Close() error
 }
 

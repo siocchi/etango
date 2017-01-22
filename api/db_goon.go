@@ -29,7 +29,8 @@ type WordGoon struct {
 }
 
 type ProfileGoon struct {
-	Uid string `datastore:"-" goon:"id"`
+	Uid string `datastore:"-" goon:"id"` // id
+	UserName string	`datastore:"user_name"` // user name
 }
 
 type wordDbGoon struct {
@@ -159,10 +160,9 @@ func (db *wordDbGoon) AddWord(uid string, w PostWord, r *http.Request) (string, 
 	}
 
 	g := goon.NewGoon(r)
-	pkey := ProfileGoon{Uid: uid}
-	uid_key, err := g.Put(&pkey)
+
+	uid_key, err := db.GetProfileKey(uid, r)
 	if err != nil {
-		log.Debugf(appengine.NewContext(r), "%v", err)
 		return "", err
 	}
 
@@ -252,7 +252,6 @@ func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Reque
 	return w2, err
 }
 
-
 func (db *wordDbGoon) Delete(id string, uid string, r *http.Request) error {
 	g := goon.NewGoon(r)
 
@@ -285,6 +284,16 @@ func (db *wordDbGoon) Delete(id string, uid string, r *http.Request) error {
 	return err2
 }
 
+func (db *wordDbGoon) SignUp(uid string, user string, r *http.Request) error {
+	g := goon.NewGoon(r)
+
+	// TODO validate username
+
+	pkey := ProfileGoon{Uid: uid, UserName: user}
+	_, err := g.Put(&pkey)
+
+	return err
+}
 
 func (db *wordDbGoon) Close() error {
 	return nil
