@@ -2,10 +2,8 @@ package main
 
 import (
 	"encoding/gob"
-	"errors"
 	"os"
 	"net/http"
-	"net/url"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -23,7 +21,6 @@ const (
 	defaultSessionID = "default"
 	googleProfileSessionKey = "google_profile"
 	oauthTokenSessionKey    = "oauth_token"
-	oauthFlowRedirectKey = "redirect"
 )
 
 var (
@@ -63,12 +60,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request)  {
 	}
 	oauthFlowSession.Options.MaxAge = 10 * 60 // 10 minutes
 
-	redirectURL, err := validateRedirectURL(r.FormValue("redirect"))
-	if err != nil {
-		return // appErrorf(err, "invalid redirect URL: %v", err)
-	}
-	oauthFlowSession.Values[oauthFlowRedirectKey] = redirectURL
-
 	if err := oauthFlowSession.Save(r, w); err != nil {
 		return // appErrorf(err, "could not save session: %v", err)
 	}
@@ -78,34 +69,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request)  {
 	// return nil
 }
 
-func validateRedirectURL(path string) (string, error) {
-	if path == "" {
-		return "/", nil
-	}
-
-	parsedURL, err := url.Parse(path)
-	if err != nil {
-		return "/", err
-	}
-	if parsedURL.IsAbs() {
-		return "/", errors.New("URL must be absolute")
-	}
-	return path, nil
-}
-
 func oauthCallbackHandler(w http.ResponseWriter, r *http.Request) /* *appError */ {
-	oauthFlowSession, err := SessionStore.Get(r, r.FormValue("state"))
 	ctx := appengine.NewContext(r)
-	if err != nil {
-		log.Infof(ctx, "invalid state parameter. try logging in again.")
-		return
-	}
-
-	redirectURL, ok := oauthFlowSession.Values[oauthFlowRedirectKey].(string)
-	if !ok {
-		log.Infof(ctx, "invalid state parameter. try logging in again. 2")
-		return
-	}
 
 	code := r.FormValue("code")
 	tok, err := OAuthConfig.Exchange(ctx, code)
@@ -136,7 +101,7 @@ func oauthCallbackHandler(w http.ResponseWriter, r *http.Request) /* *appError *
 		return
 	}
 
-	http.Redirect(w, r, redirectURL, http.StatusFound)
+	http.Redirect(w, r, "/signup", http.StatusFound)
 }
 
 func fetchProfile(ctx context.Context, tok *oauth2.Token) (*plus.Person, error) {

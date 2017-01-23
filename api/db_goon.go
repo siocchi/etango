@@ -284,6 +284,20 @@ func (db *wordDbGoon) Delete(id string, uid string, r *http.Request) error {
 	return err2
 }
 
+func (db *wordDbGoon) GetUser(uid string, r *http.Request) (string, error) {
+	g := goon.NewGoon(r)
+	p := ProfileGoon{Uid: uid}
+	if err := g.Get(&p); err != nil {
+		log.Debugf(appengine.NewContext(r), "%v", err)
+		return "", err
+	} else {
+		return p.UserName, nil
+	}
+
+}
+
+
+// TODO rename
 func (db *wordDbGoon) SignUp(uid string, user string, r *http.Request) error {
 	g := goon.NewGoon(r)
 

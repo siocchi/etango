@@ -19,6 +19,8 @@ type WordDb interface {
 
 	SignUp(string, string, *http.Request) error
 
+	GetUser(string, *http.Request) (string, error)
+
 	Close() error
 }
 
@@ -49,6 +51,10 @@ type (
 		Count     int `form:"count" json:"count"`
 		Priority  int `form:"priority" json:"priority"`
 		ReviewedAt time.Time `json:"reviewed_at"`
+	}
+
+	PostUser struct {
+		User     string `form:"user" json:"user" binding:"required"`
 	}
 )
 
@@ -137,15 +143,40 @@ func delete(c *gin.Context) {
 	}
 }
 
+func create_user(c *gin.Context) {
+	profile := profileFromSession(c.Request)
+	if profile == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
+		return
+	}
+
+	var json PostUser
+	if c.BindJSON(&json) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
+		return
+	}
+
+	if err := db.SignUp(profile.ID, json.User, c.Request); err == nil {
+		c.JSON(http.StatusOK, gin.H{"status": "success"})
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
+	}
+}
+
 func profile(c *gin.Context) {
 	profile := profileFromSession(c.Request)
 	if profile == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
 	} else {
+		user, err := db.GetUser(profile.ID, c.Request) // TODO yokunai
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"status": "unregistered"})
+			return
+		}
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Headers", "Content-Type")
-		c.JSON(http.StatusOK, gin.H{"image_url": profile.ImageURL, "screen_name": profile.DisplayName})
+		c.JSON(http.StatusOK, gin.H{"id": user, "image_url": profile.ImageURL, "screen_name": profile.DisplayName})
 	}
 }
 
@@ -170,6 +201,7 @@ func init() {
 	r.POST("/v1/word/:id/edit.json", edit)
 	r.DELETE("/v1/word/:id/edit.json", delete)
 
+	r.POST("/v1/create_user.json", create_user)
 	r.GET("/v1/profile.json", profile)
 
 	http.HandleFunc("/v1/login", loginHandler)
