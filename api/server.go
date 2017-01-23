@@ -156,28 +156,39 @@ func create_user(c *gin.Context) {
 		return
 	}
 
-	if err := db.SignUp(profile.ID, json.User, c.Request); err == nil {
-		c.JSON(http.StatusOK, gin.H{"status": "success"})
-	} else {
+	if err := db.SignUp(profile.ID, json.User, c.Request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
+		return
 	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
 func profile(c *gin.Context) {
-	profile := profileFromSession(c.Request)
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Headers", "Content-Type")
+
+	var profile = profileFromSession(c.Request)
+
 	if profile == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
-	} else {
-		user, err := db.GetUser(profile.ID, c.Request) // TODO yokunai
+	}
+
+	var user string
+	var err error
+	if user, err = userFromSession(c.Request); err != nil {
+		user, err = db.GetUser(profile.ID, c.Request)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"status": "unregistered"})
 			return
 		}
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Headers", "Content-Type")
-		c.JSON(http.StatusOK, gin.H{"id": user, "image_url": profile.ImageURL, "screen_name": profile.DisplayName})
+		if err := storeAdditionalInfo(user, c.Request); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"status": "something wrong"})
+			return
+		}
 	}
+	c.JSON(http.StatusOK, gin.H{"user_name": user, "image_url": profile.ImageURL, "screen_name": profile.DisplayName})
 }
 
 func init() {

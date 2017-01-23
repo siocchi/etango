@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"os"
 	"net/http"
+	"errors"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -21,6 +22,7 @@ const (
 	defaultSessionID = "default"
 	googleProfileSessionKey = "google_profile"
 	oauthTokenSessionKey    = "oauth_token"
+	additionalUserSeesionKey = "additional_nanika"
 )
 
 var (
@@ -133,6 +135,20 @@ func logoutHandler(w http.ResponseWriter, r *http.Request)  {
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
+func storeAdditionalInfo(user string, r *http.Request) error {
+	ctx := appengine.NewContext(r)
+
+	session, err := SessionStore.New(r, defaultSessionID)
+	if err != nil {
+		log.Infof(ctx, "could not get default session: %v", err)
+		return err
+	}
+
+	session.Values[additionalUserSeesionKey] = user
+
+	return nil
+}
+
 func profileFromSession(r *http.Request) *Profile {
 	if SuperUser {
 		return &Profile{
@@ -155,6 +171,26 @@ func profileFromSession(r *http.Request) *Profile {
 		return nil
 	}
 	return profile
+}
+
+func userFromSession(r *http.Request) (string, error) {
+	if SuperUser {
+		return "super", nil
+	}
+
+	session, err := SessionStore.Get(r, defaultSessionID)
+	if err != nil {
+		return "", err
+	}
+	tok, ok := session.Values[oauthTokenSessionKey].(*oauth2.Token)
+	if !ok || !tok.Valid() {
+		return "", err
+	}
+	user, ok := session.Values[additionalUserSeesionKey].(string)
+	if !ok {
+		return "", errors.New("user session is not found in session")
+	}
+	return user, nil
 }
 
 type Profile struct {

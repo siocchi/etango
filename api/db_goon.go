@@ -293,7 +293,6 @@ func (db *wordDbGoon) GetUser(uid string, r *http.Request) (string, error) {
 	} else {
 		return p.UserName, nil
 	}
-
 }
 
 
