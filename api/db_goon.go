@@ -297,10 +297,20 @@ func (db *wordDbGoon) GetUser(uid string, r *http.Request) (string, error) {
 
 
 // TODO rename
-func (db *wordDbGoon) SignUp(uid string, user string, r *http.Request) error {
+func (db *wordDbGoon) NewUser(uid string, user string, r *http.Request) error {
 	g := goon.NewGoon(r)
 
 	// TODO validate username
+
+	profiles := []ProfileGoon{}
+	if _, err := g.GetAll(datastore.NewQuery("ProfileGoon").Filter("user =", user), &profiles); err != nil {
+		log.Debugf(appengine.NewContext(r), "%v", err)
+		return err
+	}
+
+	if len(profiles) != 0 {
+		return errors.New("already in")
+	}
 
 	pkey := ProfileGoon{Uid: uid, UserName: user}
 	_, err := g.Put(&pkey)

@@ -17,7 +17,7 @@ type WordDb interface {
 
 	Delete(string, string, *http.Request) error
 
-	SignUp(string, string, *http.Request) error
+	NewUser(string, string, *http.Request) error
 
 	GetUser(string, *http.Request) (string, error)
 
@@ -156,7 +156,7 @@ func create_user(c *gin.Context) {
 		return
 	}
 
-	if err := db.SignUp(profile.ID, json.User, c.Request); err != nil {
+	if err := db.NewUser(profile.ID, json.User, c.Request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
 		return
 	}
