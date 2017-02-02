@@ -11,6 +11,8 @@ import (
 type WordDb interface {
 	GetAll(string, bool, string, *http.Request) ([]Word, error)
 
+	GetPublicAll(string, *http.Request) ([]Word, error)
+
 	AddWord(string, PostWord, *http.Request) (string, error)
 
 	EditWord(string, string, EditWord, *http.Request) (Word, error)
@@ -18,6 +20,8 @@ type WordDb interface {
 	Delete(string, string, *http.Request) error
 
 	NewUser(string, string, *http.Request) error
+
+	GetUidByUser(user string, r *http.Request) (string, error)
 
 	GetUser(string, *http.Request) (string, error)
 
@@ -77,6 +81,22 @@ func words(c *gin.Context) {
 		c.JSON(http.StatusOK, all)
 	} else {
 		c.JSON(http.StatusBadRequest, "error")
+	}
+}
+
+func wordsWithUnauthorized(c *gin.Context) {
+
+	uid, err := db.GetUidByUser(c.Param("user"), c.Request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, "not found")
+		return
+	}
+
+	c.Header("Access-Control-Allow-Origin", "*")
+	if all, err := db.GetPublicAll(uid, c.Request); err != nil {
+		c.JSON(http.StatusBadRequest, "error")
+	} else {
+		c.JSON(http.StatusOK, all)
 	}
 }
 
@@ -214,6 +234,7 @@ func init() {
 
 	r.POST("/v1/create_user.json", create_user)
 	r.GET("/v1/profile.json", profile)
+	r.GET("/v1/user/:user/words.json", wordsWithUnauthorized)
 
 	http.HandleFunc("/v1/login", loginHandler)
 	http.HandleFunc("/v1/logout", logoutHandler)

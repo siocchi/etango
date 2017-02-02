@@ -137,6 +137,31 @@ func (db *wordDbGoon) GetAll(uid string, is_review bool, duration_s string, r *h
 	return ws, nil
 }
 
+func (db *wordDbGoon) GetPublicAll(uid string, r *http.Request) ([]Word, error) {
+	if all, err := db.GetAll(uid, false, "", r); err != nil {
+		return []Word{}, err
+	} else {
+		ws := []Word{}
+		for _, w := range all {
+			v := Word{
+				Id: w.Id,
+				Text: w.Text,
+				Memo: "",
+				Tag: "",
+				IsReview: false,
+				IsInput: false,
+				Count: w.Count,
+				Priority: w.Priority,
+				UpdatedAt: w.UpdatedAt,
+				ReviewedAt: w.ReviewedAt,
+			}
+			ws = append(ws, v)
+		}
+
+		return ws, nil
+	}
+}
+
 func (db *wordDbGoon) GenId(word string, r *http.Request) (string, error) {
 	reg, _ := regexp.Compile("/ /")
 	replaced := reg.ReplaceAllString(word, "_")
@@ -284,6 +309,23 @@ func (db *wordDbGoon) Delete(id string, uid string, r *http.Request) error {
 	return err2
 }
 
+func (db *wordDbGoon) GetUidByUser(user string, r *http.Request) (string, error) {
+	g := goon.NewGoon(r)
+
+	profiles := []ProfileGoon{}
+	if _, err := g.GetAll(datastore.NewQuery("ProfileGoon").Filter("user_name =", user), &profiles); err != nil {
+		log.Debugf(appengine.NewContext(r), "%v", err)
+		return "", err
+	}
+
+	if len(profiles) == 0 {
+		log.Debugf(appengine.NewContext(r), "not found user %v", user)
+		return "", errors.New("not found user")
+	}
+
+	return profiles[0].Uid, nil
+}
+
 func (db *wordDbGoon) GetUser(uid string, r *http.Request) (string, error) {
 	g := goon.NewGoon(r)
 	p := ProfileGoon{Uid: uid}
@@ -303,7 +345,7 @@ func (db *wordDbGoon) NewUser(uid string, user string, r *http.Request) error {
 	// TODO validate username
 
 	profiles := []ProfileGoon{}
-	if _, err := g.GetAll(datastore.NewQuery("ProfileGoon").Filter("user =", user), &profiles); err != nil {
+	if _, err := g.GetAll(datastore.NewQuery("ProfileGoon").Filter("user_name =", user), &profiles); err != nil {
 		log.Debugf(appengine.NewContext(r), "%v", err)
 		return err
 	}
