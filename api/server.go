@@ -84,17 +84,17 @@ func words(c *gin.Context) {
 	}
 }
 
-func wordsWithUnauthorized(c *gin.Context) {
+func wordsUnauthorized(c *gin.Context) {
 
 	uid, err := db.GetUidByUser(c.Param("user"), c.Request)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, "not found")
+		c.JSON(http.StatusBadRequest, gin.H{"status": "not found user"})
 		return
 	}
 
 	c.Header("Access-Control-Allow-Origin", "*")
 	if all, err := db.GetPublicAll(uid, c.Request); err != nil {
-		c.JSON(http.StatusBadRequest, "error")
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error"})
 	} else {
 		c.JSON(http.StatusOK, all)
 	}
@@ -131,15 +131,14 @@ func edit(c *gin.Context) {
 	}
 
 	c.Header("Access-Control-Allow-Origin", "*")
-	if c.BindJSON(&json) == nil {
-		w, err := db.EditWord(id, profile.ID, json, c.Request)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"status": "something wrong"})
-		} else {
-			c.JSON(http.StatusOK, w)
-		}
-	} else {
+	if c.BindJSON(&json) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "parse error"})
+		return
+	}
+	if w, err := db.EditWord(id, profile.ID, json, c.Request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "something wrong"})
+	} else {
+		c.JSON(http.StatusOK, w)
 	}
 }
 
@@ -163,7 +162,7 @@ func delete(c *gin.Context) {
 	}
 }
 
-func create_user(c *gin.Context) {
+func createUser(c *gin.Context) {
 	profile := profileFromSession(c.Request)
 	if profile == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
@@ -232,9 +231,9 @@ func init() {
 	r.POST("/v1/word/:id/edit.json", edit)
 	r.DELETE("/v1/word/:id/edit.json", delete)
 
-	r.POST("/v1/create_user.json", create_user)
+	r.POST("/v1/create_user.json", createUser)
 	r.GET("/v1/profile.json", profile)
-	r.GET("/v1/user/:user/words.json", wordsWithUnauthorized)
+	r.GET("/v1/user/:user/words.json", wordsUnauthorized)
 
 	http.HandleFunc("/v1/login", loginHandler)
 	http.HandleFunc("/v1/logout", logoutHandler)
