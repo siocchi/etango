@@ -5,8 +5,9 @@ handlers:
 - url: /v1/.*
   script: _go_app
 
-- url: /
+- url: /(|review|signup|home)$
   static_files: public/index.html
+  upload: public/index.html
 
 - url: /
   static_dir: public

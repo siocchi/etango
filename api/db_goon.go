@@ -338,7 +338,6 @@ func (db *wordDbGoon) GetUser(uid string, r *http.Request) (string, error) {
 }
 
 
-// TODO rename
 func (db *wordDbGoon) NewUser(uid string, user string, r *http.Request) error {
 	g := goon.NewGoon(r)
 
@@ -358,8 +357,4 @@ func (db *wordDbGoon) NewUser(uid string, user string, r *http.Request) error {
 	_, err := g.Put(&pkey)
 
 	return err
-}
-
-func (db *wordDbGoon) Close() error {
-	return nil
 }

@@ -24,8 +24,6 @@ type WordDb interface {
 	GetUidByUser(user string, r *http.Request) (string, error)
 
 	GetUser(string, *http.Request) (string, error)
-
-	Close() error
 }
 
 type (
@@ -122,8 +120,6 @@ func create(c *gin.Context) {
 func edit(c *gin.Context) {
 	var json EditWord
 
-	id := c.Param("id")
-
 	profile := profileFromSession(c.Request)
 	if profile == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
@@ -135,7 +131,7 @@ func edit(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "parse error"})
 		return
 	}
-	if w, err := db.EditWord(id, profile.ID, json, c.Request); err != nil {
+	if w, err := db.EditWord(c.Param("id"), profile.ID, json, c.Request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "something wrong"})
 	} else {
 		c.JSON(http.StatusOK, w)
