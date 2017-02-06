@@ -36,6 +36,7 @@ type (
 		IsInput bool `json:"is_input"`
 		Count int	 `json:"count"`
 		Priority int `json:"priority"`
+		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
 		ReviewedAt time.Time `json:"reviewed_at"`
 	}

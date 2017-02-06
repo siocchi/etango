@@ -24,6 +24,7 @@ type WordGoon struct {
 	IsInput bool `datastore:"is_input"`
 	Count int	 `datastore:"count"`
 	Priority int `datastore:"priority"`
+	CreatedAt time.Time `datastore:"created_at"`
 	UpdatedAt time.Time `datastore:"updated_at"`
 	ReviewedAt time.Time `datastore:"reviewed_at"`
 }
@@ -82,6 +83,7 @@ func (db *wordDbGoon) GetWord(key string, uid string, r *http.Request) (Word, er
 		IsInput: w.IsInput,
 		Count: w.Count,
 		Priority: w.Priority,
+		CreatedAt: w.CreatedAt,
 		UpdatedAt: w.UpdatedAt,
 		ReviewedAt: w.ReviewedAt,
 	}
@@ -107,8 +109,10 @@ func (db *wordDbGoon) GetAll(uid string, is_review bool, duration_s string, r *h
 			log.Debugf(appengine.NewContext(r), "%v duration:%v", err, duration_s)
 			return []Word{}, err
 		}
-		filter = filter.Filter("reviewed_at <", time.Now().Add(time.Duration(-1)*d))
+		filter = filter.Filter("reviewed_at <", time.Now().Add(time.Duration(-1)*d)).Order("reviewed_at")
 	}
+
+	filter = filter.Order("-created_at").Limit(100).Offset(0)
 
 	words := []WordGoon{}
 	g := goon.NewGoon(r)
@@ -128,6 +132,7 @@ func (db *wordDbGoon) GetAll(uid string, is_review bool, duration_s string, r *h
 			IsInput: w.IsInput,
 			Count: w.Count,
 			Priority: w.Priority,
+			CreatedAt: w.CreatedAt,
 			UpdatedAt: w.UpdatedAt,
 			ReviewedAt: w.ReviewedAt,
 		}
@@ -152,6 +157,7 @@ func (db *wordDbGoon) GetPublicAll(uid string, r *http.Request) ([]Word, error) 
 				IsInput: false,
 				Count: w.Count,
 				Priority: w.Priority,
+				CreatedAt: w.CreatedAt,
 				UpdatedAt: w.UpdatedAt,
 				ReviewedAt: w.ReviewedAt,
 			}
@@ -201,6 +207,7 @@ func (db *wordDbGoon) AddWord(uid string, w PostWord, r *http.Request) (string, 
 		IsInput: true,
 		Count: 0,
 		Priority: 0,
+		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		ReviewedAt: time.Now(),
 	}
@@ -263,6 +270,7 @@ func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Reque
 		IsInput: ew.IsInput,
 		Count: ew.Count,
 		Priority: ew.Priority,
+		CreatedAt: w.CreatedAt,
 		UpdatedAt: time.Now(),
 		ReviewedAt: ew.ReviewedAt,
 	}
