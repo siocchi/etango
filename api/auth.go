@@ -23,6 +23,7 @@ const (
 	googleProfileSessionKey = "google_profile"
 	oauthTokenSessionKey    = "oauth_token"
 	additionalUserSeesionKey = "additional_nanika"
+	sessionExpirationMinute = 60
 )
 
 var (
@@ -60,7 +61,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request)  {
 	if err != nil {
 		return // appErrorf(err, "could not create oauth session: %v", err)
 	}
-	oauthFlowSession.Options.MaxAge = 10 * 60 // 10 minutes
+	oauthFlowSession.Options.MaxAge = sessionExpirationMinute * 60 
 
 	if err := oauthFlowSession.Save(r, w); err != nil {
 		return // appErrorf(err, "could not save session: %v", err)
