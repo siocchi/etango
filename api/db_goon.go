@@ -32,6 +32,7 @@ type WordGoon struct {
 type ProfileGoon struct {
 	Uid string `datastore:"-" goon:"id"` // id
 	UserName string	`datastore:"user_name"` // user name
+	CreatedAt time.Time `datastore:"created_at"`
 }
 
 type wordDbGoon struct {
@@ -341,6 +342,7 @@ func (db *wordDbGoon) GetUser(uid string, r *http.Request) (string, error) {
 		log.Debugf(appengine.NewContext(r), "%v", err)
 		return "", err
 	} else {
+		log.Debugf(appengine.NewContext(r), "login with %v", p)			
 		return p.UserName, nil
 	}
 }
@@ -361,7 +363,11 @@ func (db *wordDbGoon) NewUser(uid string, user string, r *http.Request) error {
 		return errors.New("already in")
 	}
 
-	pkey := ProfileGoon{Uid: uid, UserName: user}
+	pkey := ProfileGoon{
+		Uid: uid,
+		UserName: user,
+		CreatedAt: time.Now(),
+	}
 	_, err := g.Put(&pkey)
 
 	return err
