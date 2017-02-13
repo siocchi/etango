@@ -286,6 +286,58 @@ func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Reque
 	return w2, err
 }
 
+func (db *wordDbGoon) Copy(id string, uid string, r *http.Request) (Word, error) {
+
+	g := goon.NewGoon(r)
+
+	uid_key, err := db.GetProfileKey(uid, r)
+	if err != nil {
+		return Word{}, err
+	}
+
+	w := new(WordGoon)
+	w.Id = id
+	w.Uid = uid_key
+	if err := g.Get(w); err != nil {
+		log.Debugf(appengine.NewContext(r), "edit:%v", err)
+		return Word{}, err
+	}
+
+	new_id, err1 := db.GenId(w.Text, r)
+	if err1 != nil {
+		log.Debugf(appengine.NewContext(r), "%v", err1)
+		return Word{}, err1
+	}
+
+
+	if w.Uid != uid_key {
+		return Word{}, errors.New("uid invalid")
+	}
+
+	wg := WordGoon{
+		Id:   new_id,
+		Uid:  uid_key,
+		Text: w.Text,
+		Memo: "",
+		Tag: "",
+		IsReview: false,
+		IsInput: false,
+		Priority: w.Priority,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		ReviewedAt: time.Now(),
+	}
+
+	if _, err := g.Put(&wg); err != nil {
+		log.Debugf(appengine.NewContext(r), "%v", err)
+		return Word{}, err
+	}
+
+	w2, err := db.GetWord(new_id, uid, r)
+	log.Debugf(appengine.NewContext(r), "updated:%v", w2)
+	return w2, err
+}
+
 func (db *wordDbGoon) Delete(id string, uid string, r *http.Request) error {
 	g := goon.NewGoon(r)
 
@@ -342,7 +394,7 @@ func (db *wordDbGoon) GetUser(uid string, r *http.Request) (string, error) {
 		log.Debugf(appengine.NewContext(r), "%v", err)
 		return "", err
 	} else {
-		log.Debugf(appengine.NewContext(r), "login with %v", p)			
+		log.Debugf(appengine.NewContext(r), "login with %v", p)
 		return p.UserName, nil
 	}
 }

@@ -19,6 +19,8 @@ type WordDb interface {
 
 	Delete(string, string, *http.Request) error
 
+	Copy(string, string, *http.Request) (Word, error)
+
 	NewUser(string, string, *http.Request) error
 
 	GetUidByUser(user string, r *http.Request) (string, error)
