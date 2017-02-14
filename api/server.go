@@ -13,9 +13,9 @@ type WordDb interface {
 
 	GetPublicAll(string, *http.Request) ([]Word, error)
 
-	AddWord(string, PostWord, *http.Request) (string, error)
+	Add(string, PostWord, *http.Request) (string, error)
 
-	EditWord(string, string, EditWord, *http.Request) (Word, error)
+	Edit(string, string, EditWord, *http.Request) (Word, error)
 
 	Delete(string, string, *http.Request) error
 
@@ -113,7 +113,7 @@ func create(c *gin.Context) {
 
 	if c.BindJSON(&json) == nil {
 		log.Debugf(appengine.NewContext(c.Request), "post:%v", json)
-		db.AddWord(profile.ID, json, c.Request)
+		db.Add(profile.ID, json, c.Request)
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "parse error"})
@@ -134,7 +134,7 @@ func edit(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "parse error"})
 		return
 	}
-	if w, err := db.EditWord(c.Param("id"), profile.ID, json, c.Request); err != nil {
+	if w, err := db.Edit(c.Param("id"), profile.ID, json, c.Request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "something wrong"})
 	} else {
 		c.JSON(http.StatusOK, w)

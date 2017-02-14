@@ -54,7 +54,7 @@ func (db *wordDbGoon) GetProfileKey(uid string, r *http.Request) (*datastore.Key
 	}
 }
 
-func (db *wordDbGoon) GetWord(key string, uid string, r *http.Request) (Word, error) {
+func (db *wordDbGoon) Get(key string, uid string, r *http.Request) (Word, error) {
 	g := goon.NewGoon(r)
 
 	uid_key, err := db.GetProfileKey(uid, r)
@@ -183,7 +183,7 @@ func (db *wordDbGoon) GenId(word string, r *http.Request) (string, error) {
 	return key, nil
 }
 
-func (db *wordDbGoon) AddWord(uid string, w PostWord, r *http.Request) (string, error) {
+func (db *wordDbGoon) Add(uid string, w PostWord, r *http.Request) (string, error) {
 
 	key, err1 := db.GenId(w.Text, r)
 	if err1 != nil {
@@ -222,7 +222,7 @@ func (db *wordDbGoon) AddWord(uid string, w PostWord, r *http.Request) (string, 
 	return key, nil
 }
 
-func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Request) (Word, error) {
+func (db *wordDbGoon) Edit(id string, uid string, ew EditWord, r *http.Request) (Word, error) {
 
 	g := goon.NewGoon(r)
 
@@ -281,7 +281,7 @@ func (db *wordDbGoon) EditWord(id string, uid string, ew EditWord, r *http.Reque
 		return Word{}, err
 	}
 
-	w2, err := db.GetWord(id, uid, r)
+	w2, err := db.Get(id, uid, r)
 	log.Debugf(appengine.NewContext(r), "updated:%v", w2)
 	return w2, err
 }
@@ -333,7 +333,7 @@ func (db *wordDbGoon) Copy(id string, uid string, r *http.Request) (Word, error)
 		return Word{}, err
 	}
 
-	w2, err := db.GetWord(new_id, uid, r)
+	w2, err := db.Get(new_id, uid, r)
 	log.Debugf(appengine.NewContext(r), "updated:%v", w2)
 	return w2, err
 }
