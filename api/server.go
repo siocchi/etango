@@ -20,6 +20,10 @@ type WordDb interface {
 	Delete(string, string, *http.Request) error
 
 	Copy(string, string, *http.Request) (Word, error)
+}
+
+type UserDb interface {
+	NewUser2(string, *http.Request) error
 
 	NewUser(string, string, *http.Request) error
 
@@ -65,6 +69,7 @@ type (
 
 var (
 	db WordDb
+	userDb UserDb
 )
 
 func words(c *gin.Context) {
@@ -87,7 +92,7 @@ func words(c *gin.Context) {
 
 func wordsUnauthorized(c *gin.Context) {
 
-	uid, err := db.GetUidByUser(c.Param("user"), c.Request)
+	uid, err := userDb.GetUidByUser(c.Param("user"), c.Request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "not found user"})
 		return
@@ -174,7 +179,7 @@ func createUser(c *gin.Context) {
 		return
 	}
 
-	if err := db.NewUser(profile.ID, json.User, c.Request); err != nil {
+	if err := userDb.NewUser(profile.ID, json.User, c.Request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
 		return
 	}
@@ -196,7 +201,7 @@ func profile(c *gin.Context) {
 	var user string
 	var err error
 	if user, err = userFromSession(c.Request); err != nil {
-		user, err = db.GetUser(profile.ID, c.Request)
+		user, err = userDb.GetUser(profile.ID, c.Request)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"status": "unregistered"})
 			return
@@ -210,7 +215,8 @@ func profile(c *gin.Context) {
 }
 
 func init() {
-	db = newDbGoon() // newDbMem()
+	db = newDbGoon()
+	userDb = newUserDbGoon()
 
 	gin.SetMode(gin.DebugMode)
 	r := gin.Default()
