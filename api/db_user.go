@@ -19,12 +19,12 @@ type ProfileGoon struct {
 }
 
 type userDbGoon struct {
-	goon string
 }
 
 func newUserDbGoon() *userDbGoon {
-	return &userDbGoon{goon: ""}
+	return &userDbGoon{}
 }
+
 func (db *userDbGoon) GetUidByUser(user string, r *http.Request) (string, error) {
 	g := goon.NewGoon(r)
 

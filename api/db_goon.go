@@ -30,11 +30,10 @@ type WordGoon struct {
 }
 
 type wordDbGoon struct {
-	goon string
 }
 
 func newDbGoon() *wordDbGoon {
-	return &wordDbGoon{goon: ""}
+	return &wordDbGoon{}
 }
 
 func (db *wordDbGoon) GetProfileKey(uid string, r *http.Request) (*datastore.Key, error) {
