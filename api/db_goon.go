@@ -19,7 +19,6 @@ type ContentGoon struct {
 	Uid  *datastore.Key `datastore:"-" goon:"parent"`
 	Text string	`datastore:"text"`
 	Memo string `datastore:"memo"`
-	Tag	 string `datastore:"tag"`
 	IsReview bool `datastore:"is_review"`
 	IsInput bool `datastore:"is_input"`
 	Count int	 `datastore:"count"`
@@ -72,7 +71,6 @@ func (db *contentDbGoon) Get(key string, uid string, r *http.Request) (Content, 
 		Id: key,
 		Text: w.Text,
 		Memo: w.Memo,
-		Tag: w.Tag,
 		IsReview: w.IsReview,
 		IsInput: w.IsInput,
 		Count: w.Count,
@@ -121,7 +119,6 @@ func (db *contentDbGoon) GetAll(uid string, is_review bool, duration_s string, r
 			Id: w.Id,
 			Text: w.Text,
 			Memo: w.Memo,
-			Tag: w.Tag,
 			IsReview: w.IsReview,
 			IsInput: w.IsInput,
 			Count: w.Count,
@@ -146,7 +143,6 @@ func (db *contentDbGoon) GetPublicAll(uid string, r *http.Request) ([]Content, e
 				Id: w.Id,
 				Text: w.Text,
 				Memo: "",
-				Tag: "",
 				IsReview: false,
 				IsInput: false,
 				Count: w.Count,
@@ -196,7 +192,6 @@ func (db *contentDbGoon) Add(uid string, w PostContent, r *http.Request) (string
 		Uid:  uid_key,
 		Text: w.Text,
 		Memo: "",
-		Tag:  "",
 		IsReview: true,
 		IsInput: true,
 		Count: 0,
@@ -239,9 +234,6 @@ func (db *contentDbGoon) Edit(id string, uid string, ew EditContent, r *http.Req
 	if (ew.Kind!="memo") {
 		ew.Memo = w.Memo
 	}
-	if (ew.Kind!="tag") {
-		ew.Tag = w.Tag
-	}
 	if (ew.Kind!="is_review") {
 		ew.IsReview = w.IsReview
 	}
@@ -259,7 +251,6 @@ func (db *contentDbGoon) Edit(id string, uid string, ew EditContent, r *http.Req
 		Uid:  uid_key,
 		Text: w.Text,
 		Memo: ew.Memo,
-		Tag: ew.Tag,
 		IsReview: ew.IsReview,
 		IsInput: ew.IsInput,
 		Count: ew.Count,
@@ -312,7 +303,6 @@ func (db *contentDbGoon) Copy(id string, uid string, r *http.Request) (Content, 
 		Uid:  uid_key,
 		Text: w.Text,
 		Memo: "",
-		Tag: "",
 		IsReview: false,
 		IsInput: false,
 		Priority: w.Priority,

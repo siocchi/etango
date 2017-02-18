@@ -36,7 +36,6 @@ type (
 		Id    string 	`json:"id"`
 		Text string	`json:"text"`
 		Memo string `json:"memo"`
-		Tag	 string `json:"tag"`
 		IsReview bool `json:"is_review"`
 		IsInput bool `json:"is_input"`
 		Count int	 `json:"count"`
@@ -53,7 +52,6 @@ type (
 	EditContent struct {
 		Kind     string `form:"kind" json:"kind"`
 		Memo     string `form:"memo" json:"memo"`
-		Tag     string `form:"tag" json:"tag"`
 		IsReview bool `json:"is_review"`
 		IsInput bool `json:"is_input"`
 		Count     int `form:"count" json:"count"`
