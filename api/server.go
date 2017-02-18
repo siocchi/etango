@@ -24,8 +24,6 @@ type WordDb interface {
 }
 
 type UserDb interface {
-	NewUser2(string, *http.Request) error
-
 	NewUser(string, string, *http.Request) error
 
 	GetUidByUser(user string, r *http.Request) (string, error)

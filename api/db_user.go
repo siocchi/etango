@@ -8,7 +8,6 @@ import (
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
-	"github.com/google/uuid"
 	"errors"
 )
 
@@ -52,17 +51,6 @@ func (db *userDbGoon) GetUser(uid string, r *http.Request) (string, error) {
 		log.Debugf(appengine.NewContext(r), "login with %v", p)
 		return p.UserName, nil
 	}
-}
-
-func (db *userDbGoon) NewUser2(user string, r *http.Request) error {
-	uuid, err1 := uuid.NewUUID()
-	if err1 != nil {
-		log.Debugf(appengine.NewContext(r), "%v", err1)
-		return err1
-	}
-	uid := string(uuid.String()[0:5])
-
-	return db.NewUser(uid, user, r)
 }
 
 func (db *userDbGoon) NewUser(uid string, user string, r *http.Request) error {
