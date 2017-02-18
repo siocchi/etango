@@ -6,6 +6,7 @@ import (
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine"
 	"time"
+	"google.golang.org/appengine/user"
 )
 
 type WordDb interface {
@@ -64,6 +65,10 @@ type (
 
 	PostUser struct {
 		User     string `form:"user" json:"user" binding:"required"`
+	}
+
+	Profile struct {
+       ID, DisplayName string
 	}
 )
 
@@ -198,20 +203,58 @@ func profile(c *gin.Context) {
 		return
 	}
 
-	var user string
-	var err error
-	if user, err = userFromSession(c.Request); err != nil {
-		user, err = userDb.GetUser(profile.ID, c.Request)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"status": "unregistered"})
-			return
-		}
-		if err := storeAdditionalInfo(user, c.Request); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"status": "something wrong"})
-			return
-		}
+	user, err := userDb.GetUser(profile.ID, c.Request)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "unregistered"})
+		return
 	}
-	c.JSON(http.StatusOK, gin.H{"user_name": user, "image_url": profile.ImageURL, "screen_name": profile.DisplayName})
+	c.JSON(http.StatusOK, gin.H{"user_name": user, "screen_name": profile.DisplayName})
+}
+
+func login(c *gin.Context) {
+	ctx := appengine.NewContext(c.Request)
+	u := user.Current(ctx)
+	if u == nil {
+		url, _ := user.LoginURL(ctx, "/signup")
+		c.Redirect(http.StatusMovedPermanently, url)
+		return
+	}
+	log.Debugf(appengine.NewContext(c.Request), "user: %v %s", u, u.ID)
+
+	_, err := userDb.GetUser(u.ID, c.Request)
+	if err != nil {
+		c.Redirect(http.StatusMovedPermanently, "/signup")
+		return
+	}
+	c.Redirect(http.StatusMovedPermanently, "/home")
+
+	// url, _ := user.LogoutURL(ctx, "/v1/logout")
+	// fmt.Fprintf(w, `Welcome, %s! (<a href="%s">sign out</a>)`, u, url)
+}
+
+func logout(c *gin.Context) {
+	ctx := appengine.NewContext(c.Request)
+	u := user.Current(ctx)
+	if u == nil {
+		c.Redirect(http.StatusMovedPermanently, "/")
+		return
+	}
+
+	url, _ := user.LogoutURL(ctx, "/")
+	c.Redirect(http.StatusMovedPermanently, url)
+}
+
+func profileFromSession(r *http.Request) *Profile {
+	ctx := appengine.NewContext(r)
+	u := user.Current(ctx)
+	if u == nil {
+		return nil
+	}
+
+	return &Profile{
+		ID: u.ID,
+		DisplayName: u.String(),
+	}
 }
 
 func init() {
@@ -240,9 +283,8 @@ func init() {
 	r.GET("/v1/profile.json", profile)
 	r.GET("/v1/user/:user/words.json", wordsUnauthorized)
 
-	http.HandleFunc("/v1/login", loginHandler)
-	http.HandleFunc("/v1/logout", logoutHandler)
-	http.HandleFunc("/v1/oauth2callback", oauthCallbackHandler)
+	r.GET("/v1/login", login)
+	r.GET("/v1/logout", logout)
 
 	http.Handle("/v1/", r)
 }

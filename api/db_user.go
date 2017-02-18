@@ -89,4 +89,3 @@ func (db *userDbGoon) NewUser(uid string, user string, r *http.Request) error {
 
 	return err
 }
-
