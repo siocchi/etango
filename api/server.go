@@ -9,18 +9,18 @@ import (
 	"google.golang.org/appengine/user"
 )
 
-type WordDb interface {
-	GetAll(string, bool, string, *http.Request) ([]Word, error)
+type ContentDb interface {
+	GetAll(string, bool, string, *http.Request) ([]Content, error)
 
-	GetPublicAll(string, *http.Request) ([]Word, error)
+	GetPublicAll(string, *http.Request) ([]Content, error)
 
-	Add(string, PostWord, *http.Request) (string, error)
+	Add(string, PostContent, *http.Request) (string, error)
 
-	Edit(string, string, EditWord, *http.Request) (Word, error)
+	Edit(string, string, EditContent, *http.Request) (Content, error)
 
 	Delete(string, string, *http.Request) error
 
-	Copy(string, string, *http.Request) (Word, error)
+	Copy(string, string, *http.Request) (Content, error)
 }
 
 type UserDb interface {
@@ -32,7 +32,7 @@ type UserDb interface {
 }
 
 type (
-	Word struct {
+	Content struct {
 		Id    string 	`json:"id"`
 		Text string	`json:"text"`
 		Memo string `json:"memo"`
@@ -46,11 +46,11 @@ type (
 		ReviewedAt time.Time `json:"reviewed_at"`
 	}
 
-	PostWord struct {
+	PostContent struct {
 		Text     string `form:"text" json:"text" binding:"required"`
 	}
 
-	EditWord struct {
+	EditContent struct {
 		Kind     string `form:"kind" json:"kind"`
 		Memo     string `form:"memo" json:"memo"`
 		Tag     string `form:"tag" json:"tag"`
@@ -71,11 +71,11 @@ type (
 )
 
 var (
-	db WordDb
+	db ContentDb
 	userDb UserDb
 )
 
-func words(c *gin.Context) {
+func contents(c *gin.Context) {
 
 	profile := profileFromSession(c.Request)
 	if profile == nil {
@@ -93,7 +93,7 @@ func words(c *gin.Context) {
 	}
 }
 
-func wordsUnauthorized(c *gin.Context) {
+func publicContents(c *gin.Context) {
 
 	uid, err := userDb.GetUidByUser(c.Param("user"), c.Request)
 	if err != nil {
@@ -110,7 +110,7 @@ func wordsUnauthorized(c *gin.Context) {
 }
 
 func create(c *gin.Context) {
-	var json PostWord
+	var json PostContent
 	c.Header("Access-Control-Allow-Origin", "*")
 
 	profile := profileFromSession(c.Request)
@@ -129,7 +129,7 @@ func create(c *gin.Context) {
 }
 
 func edit(c *gin.Context) {
-	var json EditWord
+	var json EditContent
 
 	profile := profileFromSession(c.Request)
 	if profile == nil {
@@ -262,7 +262,7 @@ func init() {
 	gin.SetMode(gin.DebugMode)
 	r := gin.Default()
 
-	r.GET("/v1/words.json", words)
+	r.GET("/v1/words.json", contents)
 	r.OPTIONS("/v1/word.json", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Headers", "Content-Type")
@@ -279,7 +279,7 @@ func init() {
 
 	r.POST("/v1/create_user.json", createUser)
 	r.GET("/v1/profile.json", profile)
-	r.GET("/v1/user/:user/words.json", wordsUnauthorized)
+	r.GET("/v1/user/:user/words.json", publicContents)
 
 	r.GET("/v1/login", login)
 	r.GET("/v1/logout", logout)
