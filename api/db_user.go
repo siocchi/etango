@@ -17,14 +17,10 @@ type ProfileGoon struct {
 	CreatedAt time.Time `datastore:"created_at"`
 }
 
-type userDbGoon struct {
+type UserDb struct {
 }
 
-func newUserDbGoon() *userDbGoon {
-	return &userDbGoon{}
-}
-
-func (db *userDbGoon) GetUidByUser(user string, r *http.Request) (string, error) {
+func (db *UserDb) GetUidByUser(user string, r *http.Request) (string, error) {
 	g := goon.NewGoon(r)
 
 	profiles := []ProfileGoon{}
@@ -41,7 +37,7 @@ func (db *userDbGoon) GetUidByUser(user string, r *http.Request) (string, error)
 	return profiles[0].Uid, nil
 }
 
-func (db *userDbGoon) GetUser(uid string, r *http.Request) (string, error) {
+func (db *UserDb) GetUser(uid string, r *http.Request) (string, error) {
 	g := goon.NewGoon(r)
 	p := ProfileGoon{Uid: uid}
 	if err := g.Get(&p); err != nil {
@@ -53,7 +49,7 @@ func (db *userDbGoon) GetUser(uid string, r *http.Request) (string, error) {
 	}
 }
 
-func (db *userDbGoon) NewUser(uid string, user string, r *http.Request) error {
+func (db *UserDb) NewUser(uid string, user string, r *http.Request) error {
 	g := goon.NewGoon(r)
 
 	// TODO validate username

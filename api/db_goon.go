@@ -28,14 +28,10 @@ type ContentGoon struct {
 	ReviewedAt time.Time `datastore:"reviewed_at"`
 }
 
-type contentDbGoon struct {
+type ContentDb struct {
 }
 
-func newDbGoon() *contentDbGoon {
-	return &contentDbGoon{}
-}
-
-func (db *contentDbGoon) GetProfileKey(uid string, r *http.Request) (*datastore.Key, error) {
+func (db *ContentDb) GetProfileKey(uid string, r *http.Request) (*datastore.Key, error) {
 	g := goon.NewGoon(r)
 	pkey := ProfileGoon{Uid: uid}
 	if uid_key, err := g.KeyError(&pkey); err != nil {
@@ -46,7 +42,7 @@ func (db *contentDbGoon) GetProfileKey(uid string, r *http.Request) (*datastore.
 	}
 }
 
-func (db *contentDbGoon) Get(key string, uid string, r *http.Request) (Content, error) {
+func (db *ContentDb) Get(key string, uid string, r *http.Request) (Content, error) {
 	g := goon.NewGoon(r)
 
 	uid_key, err := db.GetProfileKey(uid, r)
@@ -83,7 +79,7 @@ func (db *contentDbGoon) Get(key string, uid string, r *http.Request) (Content, 
 	return v, nil
 }
 
-func (db *contentDbGoon) GetAll(uid string, is_review bool, duration_s string, r *http.Request) ([]Content, error) {
+func (db *ContentDb) GetAll(uid string, is_review bool, duration_s string, r *http.Request) ([]Content, error) {
 
 	uid_key, err := db.GetProfileKey(uid, r)
 	if err != nil {
@@ -133,7 +129,7 @@ func (db *contentDbGoon) GetAll(uid string, is_review bool, duration_s string, r
 	return ws, nil
 }
 
-func (db *contentDbGoon) GetPublicAll(uid string, r *http.Request) ([]Content, error) {
+func (db *ContentDb) GetPublicAll(uid string, r *http.Request) ([]Content, error) {
 	if all, err := db.GetAll(uid, false, "", r); err != nil {
 		return []Content{}, err
 	} else {
@@ -158,7 +154,7 @@ func (db *contentDbGoon) GetPublicAll(uid string, r *http.Request) ([]Content, e
 	}
 }
 
-func (db *contentDbGoon) GenId(content string, r *http.Request) (string, error) {
+func (db *ContentDb) GenId(content string, r *http.Request) (string, error) {
 	reg, _ := regexp.Compile("/ /")
 	replaced := reg.ReplaceAllString(content, "_")
 
@@ -172,7 +168,7 @@ func (db *contentDbGoon) GenId(content string, r *http.Request) (string, error) 
 	return key, nil
 }
 
-func (db *contentDbGoon) Add(uid string, w PostContent, r *http.Request) (string, error) {
+func (db *ContentDb) Add(uid string, w PostContent, r *http.Request) (string, error) {
 
 	key, err1 := db.GenId(w.Text, r)
 	if err1 != nil {
@@ -210,7 +206,7 @@ func (db *contentDbGoon) Add(uid string, w PostContent, r *http.Request) (string
 	return key, nil
 }
 
-func (db *contentDbGoon) Edit(id string, uid string, ew EditContent, r *http.Request) (Content, error) {
+func (db *ContentDb) Edit(id string, uid string, ew EditContent, r *http.Request) (Content, error) {
 
 	g := goon.NewGoon(r)
 
@@ -270,7 +266,7 @@ func (db *contentDbGoon) Edit(id string, uid string, ew EditContent, r *http.Req
 	return w2, err
 }
 
-func (db *contentDbGoon) Copy(id string, uid string, r *http.Request) (Content, error) {
+func (db *ContentDb) Copy(id string, uid string, r *http.Request) (Content, error) {
 
 	g := goon.NewGoon(r)
 
@@ -321,7 +317,7 @@ func (db *contentDbGoon) Copy(id string, uid string, r *http.Request) (Content, 
 	return w2, err
 }
 
-func (db *contentDbGoon) Delete(id string, uid string, r *http.Request) error {
+func (db *ContentDb) Delete(id string, uid string, r *http.Request) error {
 	g := goon.NewGoon(r)
 
 	uid_key, err := db.GetProfileKey(uid, r)

@@ -9,28 +9,6 @@ import (
 	"google.golang.org/appengine/user"
 )
 
-type ContentDb interface {
-	GetAll(string, bool, string, *http.Request) ([]Content, error)
-
-	GetPublicAll(string, *http.Request) ([]Content, error)
-
-	Add(string, PostContent, *http.Request) (string, error)
-
-	Edit(string, string, EditContent, *http.Request) (Content, error)
-
-	Delete(string, string, *http.Request) error
-
-	Copy(string, string, *http.Request) (Content, error)
-}
-
-type UserDb interface {
-	NewUser(string, string, *http.Request) error
-
-	GetUidByUser(user string, r *http.Request) (string, error)
-
-	GetUser(string, *http.Request) (string, error)
-}
-
 type (
 	Content struct {
 		Id    string 	`json:"id"`
@@ -254,9 +232,6 @@ func profileFromSession(r *http.Request) *Profile {
 }
 
 func init() {
-	db = newDbGoon()
-	userDb = newUserDbGoon()
-
 	gin.SetMode(gin.DebugMode)
 	r := gin.Default()
 
