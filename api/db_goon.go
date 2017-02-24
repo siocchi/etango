@@ -266,18 +266,18 @@ func (db *ContentDb) Edit(id string, uid string, ew EditContent, r *http.Request
 	return w2, err
 }
 
-func (db *ContentDb) Copy(id string, uid string, r *http.Request) (Content, error) {
+func (db *ContentDb) Copy(sid string, suid string, duid string, r *http.Request) (Content, error) {
 
 	g := goon.NewGoon(r)
 
-	uid_key, err := db.GetProfileKey(uid, r)
+	suid_key, err := db.GetProfileKey(suid, r)
 	if err != nil {
 		return Content{}, err
 	}
 
 	w := new(ContentGoon)
-	w.Id = id
-	w.Uid = uid_key
+	w.Id = sid
+	w.Uid = suid_key
 	if err := g.Get(w); err != nil {
 		log.Debugf(appengine.NewContext(r), "edit:%v", err)
 		return Content{}, err
@@ -289,14 +289,14 @@ func (db *ContentDb) Copy(id string, uid string, r *http.Request) (Content, erro
 		return Content{}, err1
 	}
 
-
-	if w.Uid != uid_key {
-		return Content{}, errors.New("uid invalid")
+	duid_key, err := db.GetProfileKey(duid, r)
+	if err != nil {
+		return Content{}, err
 	}
 
 	wg := ContentGoon{
 		Id:   new_id,
-		Uid:  uid_key,
+		Uid:  duid_key,
 		Text: w.Text,
 		Memo: "",
 		IsReview: false,
@@ -312,7 +312,7 @@ func (db *ContentDb) Copy(id string, uid string, r *http.Request) (Content, erro
 		return Content{}, err
 	}
 
-	w2, err := db.Get(new_id, uid, r)
+	w2, err := db.Get(new_id, duid, r)
 	log.Debugf(appengine.NewContext(r), "updated:%v", w2)
 	return w2, err
 }
