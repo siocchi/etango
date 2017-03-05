@@ -193,7 +193,6 @@ func login(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, url)
 		return
 	}
-	log.Debugf(appengine.NewContext(c.Request), "user: %v %s", u, u.ID)
 
 	_, err := userDb.GetUser(u.ID, c.Request)
 	if err != nil {
@@ -201,9 +200,6 @@ func login(c *gin.Context) {
 		return
 	}
 	c.Redirect(http.StatusMovedPermanently, "/home")
-
-	// url, _ := user.LogoutURL(ctx, "/v1/logout")
-	// fmt.Fprintf(w, `Welcome, %s! (<a href="%s">sign out</a>)`, u, url)
 }
 
 func logout(c *gin.Context) {
