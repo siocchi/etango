@@ -15,6 +15,8 @@ type ProfileGoon struct {
 	Uid string `datastore:"-" goon:"id"` // id
 	UserName string	`datastore:"user_name"` // user name
 	CreatedAt time.Time `datastore:"created_at"`
+	// TODO LastLoginedAt 
+	Disabled bool `datastore:"disabled"`
 }
 
 type UserDb struct {
@@ -34,6 +36,11 @@ func (db *UserDb) GetUidByUser(user string, r *http.Request) (string, error) {
 		return "", errors.New("not found user")
 	}
 
+	if profiles[0].Disabled {
+		log.Debugf(appengine.NewContext(r), "user is now disabled%v", user)
+		return "", errors.New("user is disabled")
+	}
+
 	return profiles[0].Uid, nil
 }
 
@@ -44,8 +51,13 @@ func (db *UserDb) GetUser(uid string, r *http.Request) (string, error) {
 		log.Debugf(appengine.NewContext(r), "%v", err)
 		return "", err
 	} else {
-		log.Debugf(appengine.NewContext(r), "login with %v", p)
-		return p.UserName, nil
+	    if p.Disabled {
+			log.Debugf(appengine.NewContext(r), "user is now disabled%v", p)
+			return "", errors.New("user is disabled")
+		} else {
+			log.Debugf(appengine.NewContext(r), "login with %v", p)
+			return p.UserName, nil
+		}
 	}
 }
 
@@ -68,6 +80,7 @@ func (db *UserDb) NewUser(uid string, user string, r *http.Request) error {
 		Uid: uid,
 		UserName: user,
 		CreatedAt: time.Now(),
+		Disabled: false,
 	}
 	_, err := g.Put(&pkey)
 
