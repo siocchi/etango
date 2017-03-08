@@ -86,3 +86,23 @@ func (db *UserDb) NewUser(uid string, user string, r *http.Request) error {
 
 	return err
 }
+
+func (db *UserDb) DisableUser(uid string, r *http.Request) error {
+	g := goon.NewGoon(r)
+
+	p := ProfileGoon{Uid: uid}
+	if err := g.Get(&p); err != nil {
+		log.Debugf(appengine.NewContext(r), "%v", err)
+		return err
+	}
+
+	pkey := ProfileGoon{
+		Uid: uid,
+		UserName: p.UserName,
+		CreatedAt: p.CreatedAt,
+		Disabled: true,
+	}
+	_, err := g.Put(&pkey)
+
+	return err
+}

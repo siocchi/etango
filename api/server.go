@@ -166,6 +166,23 @@ func createUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
+func deleteUser(c *gin.Context) {
+	profile := profileFromSession(c.Request)
+	if profile == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
+		return
+	}
+
+	if err := userDb.DisableUser(profile.ID, c.Request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success"})
+}
+
+
+
 func profile(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Access-Control-Allow-Headers", "Content-Type")
@@ -247,6 +264,7 @@ func init() {
 	r.DELETE("/v1/word/:id/edit.json", delete)
 
 	r.POST("/v1/create_user.json", createUser)
+	r.POST("/v1/delete_user.json", deleteUser)
 	r.GET("/v1/profile.json", profile)
 	r.GET("/v1/user/:user/words.json", publicContents)
 
