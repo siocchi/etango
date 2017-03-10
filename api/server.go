@@ -42,7 +42,7 @@ type (
 	}
 
 	Profile struct {
-       ID, DisplayName string
+		ID, DisplayName string
 	}
 )
 
@@ -52,7 +52,6 @@ var (
 )
 
 func contents(c *gin.Context) {
-
 	profile := profileFromSession(c.Request)
 	if profile == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
@@ -70,7 +69,6 @@ func contents(c *gin.Context) {
 }
 
 func publicContents(c *gin.Context) {
-
 	uid, err := userDb.GetUidByUser(c.Param("user"), c.Request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "not found user"})
@@ -86,7 +84,6 @@ func publicContents(c *gin.Context) {
 }
 
 func create(c *gin.Context) {
-	var json PostContent
 	c.Header("Access-Control-Allow-Origin", "*")
 
 	profile := profileFromSession(c.Request)
@@ -95,6 +92,7 @@ func create(c *gin.Context) {
 		return
 	}
 
+	var json PostContent
 	if c.BindJSON(&json) == nil {
 		log.Debugf(appengine.NewContext(c.Request), "post:%v", json)
 		db.Add(profile.ID, json, c.Request)
@@ -105,7 +103,7 @@ func create(c *gin.Context) {
 }
 
 func edit(c *gin.Context) {
-	var json EditContent
+	c.Header("Access-Control-Allow-Origin", "*")
 
 	profile := profileFromSession(c.Request)
 	if profile == nil {
@@ -113,7 +111,7 @@ func edit(c *gin.Context) {
 		return
 	}
 
-	c.Header("Access-Control-Allow-Origin", "*")
+	var json EditContent
 	if c.BindJSON(&json) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "parse error"})
 		return
@@ -126,6 +124,7 @@ func edit(c *gin.Context) {
 }
 
 func delete(c *gin.Context) {
+	c.Header("Access-Control-Allow-Origin", "*")
 	id := c.Param("id")
 
 	profile := profileFromSession(c.Request)
@@ -134,7 +133,6 @@ func delete(c *gin.Context) {
 		return
 	}
 
-	c.Header("Access-Control-Allow-Origin", "*")
 	err := db.Delete(id, profile.ID, c.Request)
 	if err != nil {
 		log.Debugf(appengine.NewContext(c.Request), "delete error:%v", err)
