@@ -1,44 +1,44 @@
 package main
 
 import (
-	"net/http"
-	"gopkg.in/gin-gonic/gin.v1"
-	"google.golang.org/appengine/log"
 	"google.golang.org/appengine"
-	"time"
+	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/user"
+	"gopkg.in/gin-gonic/gin.v1"
+	"net/http"
+	"time"
 )
 
 type (
 	Content struct {
-		Id    string 	`json:"id"`
-		Text string	`json:"text"`
-		Memo string `json:"memo"`
-		IsReview bool `json:"is_review"`
-		IsInput bool `json:"is_input"`
-		Count int	 `json:"count"`
-		Priority int `json:"priority"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
+		Id         string    `json:"id"`
+		Text       string    `json:"text"`
+		Memo       string    `json:"memo"`
+		IsReview   bool      `json:"is_review"`
+		IsInput    bool      `json:"is_input"`
+		Count      int       `json:"count"`
+		Priority   int       `json:"priority"`
+		CreatedAt  time.Time `json:"created_at"`
+		UpdatedAt  time.Time `json:"updated_at"`
 		ReviewedAt time.Time `json:"reviewed_at"`
 	}
 
 	PostContent struct {
-		Text     string `form:"text" json:"text" binding:"required"`
+		Text string `form:"text" json:"text" binding:"required"`
 	}
 
 	EditContent struct {
-		Kind     string `form:"kind" json:"kind"`
-		Memo     string `form:"memo" json:"memo"`
-		IsReview bool `json:"is_review"`
-		IsInput bool `json:"is_input"`
-		Count     int `form:"count" json:"count"`
-		Priority  int `form:"priority" json:"priority"`
+		Kind       string    `form:"kind" json:"kind"`
+		Memo       string    `form:"memo" json:"memo"`
+		IsReview   bool      `json:"is_review"`
+		IsInput    bool      `json:"is_input"`
+		Count      int       `form:"count" json:"count"`
+		Priority   int       `form:"priority" json:"priority"`
 		ReviewedAt time.Time `json:"reviewed_at"`
 	}
 
 	PostUser struct {
-		User     string `form:"user" json:"user" binding:"required"`
+		User string `form:"user" json:"user" binding:"required"`
 	}
 
 	Profile struct {
@@ -47,7 +47,7 @@ type (
 )
 
 var (
-	db ContentDb
+	db     ContentDb
 	userDb UserDb
 )
 
@@ -57,8 +57,8 @@ func contents(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
 	}
-	is_review := c.Query("is_review") == "true";
-	duration := c.Query("duration");
+	is_review := c.Query("is_review") == "true"
+	duration := c.Query("duration")
 
 	c.Header("Access-Control-Allow-Origin", "*")
 	if all, err := db.GetAll(profile.ID, is_review, duration, c.Request); err == nil {
@@ -139,7 +139,7 @@ func delete(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error"})
 	} else {
 		log.Debugf(appengine.NewContext(c.Request), "delete:%v", id)
-		c.JSON(http.StatusOK, gin.H{"status":"ok"})
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	}
 }
 
@@ -178,8 +178,6 @@ func deleteUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"status": "success"})
 }
-
-
 
 func profile(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
@@ -237,7 +235,7 @@ func profileFromSession(r *http.Request) *Profile {
 	}
 
 	return &Profile{
-		ID: u.ID,
+		ID:          u.ID,
 		DisplayName: u.String(),
 	}
 }

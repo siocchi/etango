@@ -2,20 +2,20 @@
 package main
 
 import (
-	"time"
-	"net/http"
+	"errors"
 	"github.com/mjibson/goon"
-	"google.golang.org/appengine/log"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
-	"errors"
+	"google.golang.org/appengine/log"
+	"net/http"
+	"time"
 )
 
 type ProfileGoon struct {
-	Uid string `datastore:"-" goon:"id"` // id
-	UserName string	`datastore:"user_name"` // user name
+	Uid       string    `datastore:"-" goon:"id"` // id
+	UserName  string    `datastore:"user_name"`   // user name
 	CreatedAt time.Time `datastore:"created_at"`
-	// TODO LastLoginedAt 
+	// TODO LastLoginedAt
 	Disabled bool `datastore:"disabled"`
 }
 
@@ -51,7 +51,7 @@ func (db *UserDb) GetUser(uid string, r *http.Request) (string, error) {
 		log.Debugf(appengine.NewContext(r), "%v", err)
 		return "", err
 	} else {
-	    if p.Disabled {
+		if p.Disabled {
 			log.Debugf(appengine.NewContext(r), "user is now disabled%v", p)
 			return "", errors.New("user is disabled")
 		} else {
@@ -77,10 +77,10 @@ func (db *UserDb) NewUser(uid string, user string, r *http.Request) error {
 	}
 
 	pkey := ProfileGoon{
-		Uid: uid,
-		UserName: user,
+		Uid:       uid,
+		UserName:  user,
 		CreatedAt: time.Now(),
-		Disabled: false,
+		Disabled:  false,
 	}
 	_, err := g.Put(&pkey)
 
@@ -97,10 +97,10 @@ func (db *UserDb) DisableUser(uid string, r *http.Request) error {
 	}
 
 	pkey := ProfileGoon{
-		Uid: uid,
-		UserName: p.UserName,
+		Uid:       uid,
+		UserName:  p.UserName,
 		CreatedAt: p.CreatedAt,
-		Disabled: true,
+		Disabled:  true,
 	}
 	_, err := g.Put(&pkey)
 

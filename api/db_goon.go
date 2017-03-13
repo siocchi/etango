@@ -1,31 +1,30 @@
-
 // https://godoc.org/github.com/mjibson/goon
 package main
 
 import (
-	"time"
-	"net/http"
+	"errors"
+	"github.com/google/uuid"
 	"github.com/mjibson/goon"
-	"google.golang.org/appengine/log"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
-	"github.com/google/uuid"
+	"google.golang.org/appengine/log"
+	"net/http"
 	"regexp"
-	"errors"
+	"time"
 )
 
 type ContentGoon struct {
-	Id    string 	`datastore:"-" goon:"id"`
-	Uid  *datastore.Key `datastore:"-" goon:"parent"`
-	Text string	`datastore:"text"`
-	Memo string `datastore:"memo"`
-	IsReview bool `datastore:"is_review"`
-	IsInput bool `datastore:"is_input"`
-	Count int	 `datastore:"count"`
-	Priority int `datastore:"priority"`
-	CreatedAt time.Time `datastore:"created_at"`
-	UpdatedAt time.Time `datastore:"updated_at"`
-	ReviewedAt time.Time `datastore:"reviewed_at"`
+	Id         string         `datastore:"-" goon:"id"`
+	Uid        *datastore.Key `datastore:"-" goon:"parent"`
+	Text       string         `datastore:"text"`
+	Memo       string         `datastore:"memo"`
+	IsReview   bool           `datastore:"is_review"`
+	IsInput    bool           `datastore:"is_input"`
+	Count      int            `datastore:"count"`
+	Priority   int            `datastore:"priority"`
+	CreatedAt  time.Time      `datastore:"created_at"`
+	UpdatedAt  time.Time      `datastore:"updated_at"`
+	ReviewedAt time.Time      `datastore:"reviewed_at"`
 }
 
 type ContentDb struct {
@@ -64,15 +63,15 @@ func (db *ContentDb) Get(key string, uid string, r *http.Request) (Content, erro
 	}
 
 	v := Content{
-		Id: key,
-		Text: w.Text,
-		Memo: w.Memo,
-		IsReview: w.IsReview,
-		IsInput: w.IsInput,
-		Count: w.Count,
-		Priority: w.Priority,
-		CreatedAt: w.CreatedAt,
-		UpdatedAt: w.UpdatedAt,
+		Id:         key,
+		Text:       w.Text,
+		Memo:       w.Memo,
+		IsReview:   w.IsReview,
+		IsInput:    w.IsInput,
+		Count:      w.Count,
+		Priority:   w.Priority,
+		CreatedAt:  w.CreatedAt,
+		UpdatedAt:  w.UpdatedAt,
 		ReviewedAt: w.ReviewedAt,
 	}
 
@@ -87,13 +86,13 @@ func (db *ContentDb) GetAll(uid string, is_review bool, duration_s string, r *ht
 	}
 
 	filter := datastore.NewQuery("ContentGoon").Ancestor(uid_key)
-	if (is_review) {
+	if is_review {
 		filter = filter.Filter("is_review =", true)
 	}
 
-	if (duration_s != "") {
+	if duration_s != "" {
 		d, err := time.ParseDuration(duration_s)
-		if err!=nil {
+		if err != nil {
 			log.Debugf(appengine.NewContext(r), "%v duration:%v", err, duration_s)
 			return []Content{}, err
 		}
@@ -112,15 +111,15 @@ func (db *ContentDb) GetAll(uid string, is_review bool, duration_s string, r *ht
 	ws := []Content{}
 	for _, w := range contents {
 		v := Content{
-			Id: w.Id,
-			Text: w.Text,
-			Memo: w.Memo,
-			IsReview: w.IsReview,
-			IsInput: w.IsInput,
-			Count: w.Count,
-			Priority: w.Priority,
-			CreatedAt: w.CreatedAt,
-			UpdatedAt: w.UpdatedAt,
+			Id:         w.Id,
+			Text:       w.Text,
+			Memo:       w.Memo,
+			IsReview:   w.IsReview,
+			IsInput:    w.IsInput,
+			Count:      w.Count,
+			Priority:   w.Priority,
+			CreatedAt:  w.CreatedAt,
+			UpdatedAt:  w.UpdatedAt,
 			ReviewedAt: w.ReviewedAt,
 		}
 		ws = append(ws, v)
@@ -136,15 +135,15 @@ func (db *ContentDb) GetPublicAll(uid string, r *http.Request) ([]Content, error
 		ws := []Content{}
 		for _, w := range all {
 			v := Content{
-				Id: w.Id,
-				Text: w.Text,
-				Memo: "",
-				IsReview: false,
-				IsInput: false,
-				Count: w.Count,
-				Priority: w.Priority,
-				CreatedAt: w.CreatedAt,
-				UpdatedAt: w.UpdatedAt,
+				Id:         w.Id,
+				Text:       w.Text,
+				Memo:       "",
+				IsReview:   false,
+				IsInput:    false,
+				Count:      w.Count,
+				Priority:   w.Priority,
+				CreatedAt:  w.CreatedAt,
+				UpdatedAt:  w.UpdatedAt,
 				ReviewedAt: w.ReviewedAt,
 			}
 			ws = append(ws, v)
@@ -184,16 +183,16 @@ func (db *ContentDb) Add(uid string, w PostContent, r *http.Request) (string, er
 	}
 
 	wg := ContentGoon{
-		Id:   key,
-		Uid:  uid_key,
-		Text: w.Text,
-		Memo: "",
-		IsReview: true,
-		IsInput: true,
-		Count: 0,
-		Priority: 0,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Id:         key,
+		Uid:        uid_key,
+		Text:       w.Text,
+		Memo:       "",
+		IsReview:   true,
+		IsInput:    true,
+		Count:      0,
+		Priority:   0,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 		ReviewedAt: time.Now(),
 	}
 
@@ -227,32 +226,32 @@ func (db *ContentDb) Edit(id string, uid string, ew EditContent, r *http.Request
 		return Content{}, errors.New("uid invalid")
 	}
 
-	if (ew.Kind!="memo") {
+	if ew.Kind != "memo" {
 		ew.Memo = w.Memo
 	}
-	if (ew.Kind!="is_review") {
+	if ew.Kind != "is_review" {
 		ew.IsReview = w.IsReview
 	}
-	if (ew.Kind!="is_input") {
+	if ew.Kind != "is_input" {
 		ew.IsInput = w.IsInput
 	}
-	if (ew.Kind!="reviewed_at") {
+	if ew.Kind != "reviewed_at" {
 		ew.ReviewedAt = w.ReviewedAt
 	} else {
 		ew.ReviewedAt = time.Now()
 	}
 
 	wg := ContentGoon{
-		Id:   id,
-		Uid:  uid_key,
-		Text: w.Text,
-		Memo: ew.Memo,
-		IsReview: ew.IsReview,
-		IsInput: ew.IsInput,
-		Count: ew.Count,
-		Priority: ew.Priority,
-		CreatedAt: w.CreatedAt,
-		UpdatedAt: time.Now(),
+		Id:         id,
+		Uid:        uid_key,
+		Text:       w.Text,
+		Memo:       ew.Memo,
+		IsReview:   ew.IsReview,
+		IsInput:    ew.IsInput,
+		Count:      ew.Count,
+		Priority:   ew.Priority,
+		CreatedAt:  w.CreatedAt,
+		UpdatedAt:  time.Now(),
 		ReviewedAt: ew.ReviewedAt,
 	}
 
@@ -295,15 +294,15 @@ func (db *ContentDb) Copy(sid string, suid string, duid string, r *http.Request)
 	}
 
 	wg := ContentGoon{
-		Id:   new_id,
-		Uid:  duid_key,
-		Text: w.Text,
-		Memo: "",
-		IsReview: false,
-		IsInput: false,
-		Priority: w.Priority,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Id:         new_id,
+		Uid:        duid_key,
+		Text:       w.Text,
+		Memo:       "",
+		IsReview:   false,
+		IsInput:    false,
+		Priority:   w.Priority,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 		ReviewedAt: time.Now(),
 	}
 
