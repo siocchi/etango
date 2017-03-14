@@ -5,10 +5,9 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/mjibson/goon"
-	"google.golang.org/appengine"
+	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
-	"net/http"
 	"regexp"
 	"time"
 )
@@ -30,21 +29,21 @@ type ContentGoon struct {
 type ContentDb struct {
 }
 
-func (db *ContentDb) GetProfileKey(uid string, r *http.Request) (*datastore.Key, error) {
-	g := goon.NewGoon(r)
+func (db *ContentDb) GetProfileKey(uid string, c context.Context) (*datastore.Key, error) {
+	g := goon.FromContext(c)
 	pkey := ProfileGoon{Uid: uid}
 	if uid_key, err := g.KeyError(&pkey); err != nil {
-		log.Debugf(appengine.NewContext(r), "%v", err)
+		log.Debugf(c, "%v", err)
 		return nil, err
 	} else {
 		return uid_key, nil
 	}
 }
 
-func (db *ContentDb) Get(key string, uid string, r *http.Request) (Content, error) {
-	g := goon.NewGoon(r)
+func (db *ContentDb) Get(key string, uid string, c context.Context) (Content, error) {
+	g := goon.FromContext(c)
 
-	uid_key, err := db.GetProfileKey(uid, r)
+	uid_key, err := db.GetProfileKey(uid, c)
 	if err != nil {
 		return Content{}, err
 	}
@@ -54,7 +53,7 @@ func (db *ContentDb) Get(key string, uid string, r *http.Request) (Content, erro
 	w.Uid = uid_key
 
 	if err := g.Get(w); err != nil {
-		log.Debugf(appengine.NewContext(r), "%v", err)
+		log.Debugf(c, "%v", err)
 		return Content{}, err
 	}
 
@@ -78,9 +77,9 @@ func (db *ContentDb) Get(key string, uid string, r *http.Request) (Content, erro
 	return v, nil
 }
 
-func (db *ContentDb) GetAll(uid string, is_review bool, duration_s string, r *http.Request) ([]Content, error) {
+func (db *ContentDb) GetAll(uid string, is_review bool, duration_s string, c context.Context) ([]Content, error) {
 
-	uid_key, err := db.GetProfileKey(uid, r)
+	uid_key, err := db.GetProfileKey(uid, c)
 	if err != nil {
 		return []Content{}, err
 	}
@@ -93,7 +92,7 @@ func (db *ContentDb) GetAll(uid string, is_review bool, duration_s string, r *ht
 	if duration_s != "" {
 		d, err := time.ParseDuration(duration_s)
 		if err != nil {
-			log.Debugf(appengine.NewContext(r), "%v duration:%v", err, duration_s)
+			log.Debugf(c, "%v duration:%v", err, duration_s)
 			return []Content{}, err
 		}
 		filter = filter.Filter("reviewed_at <", time.Now().Add(time.Duration(-1)*d)).Order("reviewed_at")
@@ -102,9 +101,9 @@ func (db *ContentDb) GetAll(uid string, is_review bool, duration_s string, r *ht
 	filter = filter.Order("-created_at").Limit(100).Offset(0)
 
 	contents := []ContentGoon{}
-	g := goon.NewGoon(r)
+	g := goon.FromContext(c)
 	if _, err := g.GetAll(filter, &contents); err != nil {
-		log.Debugf(appengine.NewContext(r), "%v", err)
+		log.Debugf(c, "%v", err)
 		return []Content{}, err
 	}
 
@@ -128,8 +127,8 @@ func (db *ContentDb) GetAll(uid string, is_review bool, duration_s string, r *ht
 	return ws, nil
 }
 
-func (db *ContentDb) GetPublicAll(uid string, r *http.Request) ([]Content, error) {
-	if all, err := db.GetAll(uid, false, "", r); err != nil {
+func (db *ContentDb) GetPublicAll(uid string, c context.Context) ([]Content, error) {
+	if all, err := db.GetAll(uid, false, "", c); err != nil {
 		return []Content{}, err
 	} else {
 		ws := []Content{}
@@ -153,13 +152,13 @@ func (db *ContentDb) GetPublicAll(uid string, r *http.Request) ([]Content, error
 	}
 }
 
-func (db *ContentDb) GenId(content string, r *http.Request) (string, error) {
+func (db *ContentDb) GenId(content string, c context.Context) (string, error) {
 	reg, _ := regexp.Compile("/ /")
 	replaced := reg.ReplaceAllString(content, "_")
 
 	uuid, err1 := uuid.NewUUID()
 	if err1 != nil {
-		log.Debugf(appengine.NewContext(r), "%v", err1)
+		log.Debugf(c, "%v", err1)
 		return "", err1
 	}
 	key := replaced + "_" + string(uuid.String()[0:5])
@@ -167,17 +166,17 @@ func (db *ContentDb) GenId(content string, r *http.Request) (string, error) {
 	return key, nil
 }
 
-func (db *ContentDb) Add(uid string, w PostContent, r *http.Request) (string, error) {
+func (db *ContentDb) Add(uid string, w PostContent, c context.Context) (string, error) {
 
-	key, err1 := db.GenId(w.Text, r)
+	key, err1 := db.GenId(w.Text, c)
 	if err1 != nil {
-		log.Debugf(appengine.NewContext(r), "%v", err1)
+		log.Debugf(c, "%v", err1)
 		return "", err1
 	}
 
-	g := goon.NewGoon(r)
+	g := goon.FromContext(c)
 
-	uid_key, err := db.GetProfileKey(uid, r)
+	uid_key, err := db.GetProfileKey(uid, c)
 	if err != nil {
 		return "", err
 	}
@@ -197,19 +196,19 @@ func (db *ContentDb) Add(uid string, w PostContent, r *http.Request) (string, er
 	}
 
 	if _, err := g.Put(&wg); err != nil {
-		log.Debugf(appengine.NewContext(r), "%v", err)
+		log.Debugf(c, "%v", err)
 		return "", err
 	}
-	log.Debugf(appengine.NewContext(r), "%v", wg)
+	log.Debugf(c, "%v", wg)
 
 	return key, nil
 }
 
-func (db *ContentDb) Edit(id string, uid string, ew EditContent, r *http.Request) (Content, error) {
+func (db *ContentDb) Edit(id string, uid string, ew EditContent, c context.Context) (Content, error) {
 
-	g := goon.NewGoon(r)
+	g := goon.FromContext(c)
 
-	uid_key, err := db.GetProfileKey(uid, r)
+	uid_key, err := db.GetProfileKey(uid, c)
 	if err != nil {
 		return Content{}, err
 	}
@@ -218,7 +217,7 @@ func (db *ContentDb) Edit(id string, uid string, ew EditContent, r *http.Request
 	w.Id = id
 	w.Uid = uid_key
 	if err := g.Get(w); err != nil {
-		log.Debugf(appengine.NewContext(r), "edit:%v", err)
+		log.Debugf(c, "edit:%v", err)
 		return Content{}, err
 	}
 
@@ -256,20 +255,20 @@ func (db *ContentDb) Edit(id string, uid string, ew EditContent, r *http.Request
 	}
 
 	if _, err := g.Put(&wg); err != nil {
-		log.Debugf(appengine.NewContext(r), "%v", err)
+		log.Debugf(c, "%v", err)
 		return Content{}, err
 	}
 
-	w2, err := db.Get(id, uid, r)
-	log.Debugf(appengine.NewContext(r), "updated:%v", w2)
+	w2, err := db.Get(id, uid, c)
+	log.Debugf(c, "updated:%v", w2)
 	return w2, err
 }
 
-func (db *ContentDb) Copy(sid string, suid string, duid string, r *http.Request) (Content, error) {
+func (db *ContentDb) Copy(sid string, suid string, duid string, c context.Context) (Content, error) {
 
-	g := goon.NewGoon(r)
+	g := goon.FromContext(c)
 
-	suid_key, err := db.GetProfileKey(suid, r)
+	suid_key, err := db.GetProfileKey(suid, c)
 	if err != nil {
 		return Content{}, err
 	}
@@ -278,17 +277,17 @@ func (db *ContentDb) Copy(sid string, suid string, duid string, r *http.Request)
 	w.Id = sid
 	w.Uid = suid_key
 	if err := g.Get(w); err != nil {
-		log.Debugf(appengine.NewContext(r), "edit:%v", err)
+		log.Debugf(c, "edit:%v", err)
 		return Content{}, err
 	}
 
-	new_id, err1 := db.GenId(w.Text, r)
+	new_id, err1 := db.GenId(w.Text, c)
 	if err1 != nil {
-		log.Debugf(appengine.NewContext(r), "%v", err1)
+		log.Debugf(c, "%v", err1)
 		return Content{}, err1
 	}
 
-	duid_key, err := db.GetProfileKey(duid, r)
+	duid_key, err := db.GetProfileKey(duid, c)
 	if err != nil {
 		return Content{}, err
 	}
@@ -307,19 +306,19 @@ func (db *ContentDb) Copy(sid string, suid string, duid string, r *http.Request)
 	}
 
 	if _, err := g.Put(&wg); err != nil {
-		log.Debugf(appengine.NewContext(r), "%v", err)
+		log.Debugf(c, "%v", err)
 		return Content{}, err
 	}
 
-	w2, err := db.Get(new_id, duid, r)
-	log.Debugf(appengine.NewContext(r), "updated:%v", w2)
+	w2, err := db.Get(new_id, duid, c)
+	log.Debugf(c, "updated:%v", w2)
 	return w2, err
 }
 
-func (db *ContentDb) Delete(id string, uid string, r *http.Request) error {
-	g := goon.NewGoon(r)
+func (db *ContentDb) Delete(id string, uid string, c context.Context) error {
+	g := goon.FromContext(c)
 
-	uid_key, err := db.GetProfileKey(uid, r)
+	uid_key, err := db.GetProfileKey(uid, c)
 	if err != nil {
 		return err
 	}
@@ -328,7 +327,7 @@ func (db *ContentDb) Delete(id string, uid string, r *http.Request) error {
 	w.Id = id
 	w.Uid = uid_key
 	if err := g.Get(w); err != nil {
-		log.Debugf(appengine.NewContext(r), "delete:%v", err)
+		log.Debugf(c, "delete:%v", err)
 		return err
 	}
 
