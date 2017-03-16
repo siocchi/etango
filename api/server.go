@@ -70,7 +70,7 @@ func contents(c *gin.Context) {
 }
 
 func publicContents(c *gin.Context) {
-	uid, err := userDb.GetUidByUser(c.Param("user"), c.Request)
+	uid, err := userDb.GetUidByUser(c.Param("user"), appengine.NewContext(c.Request))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "not found user"})
 		return
@@ -157,7 +157,7 @@ func createUser(c *gin.Context) {
 		return
 	}
 
-	if err := userDb.NewUser(profile.ID, json.User, c.Request); err != nil {
+	if err := userDb.NewUser(profile.ID, json.User, appengine.NewContext(c.Request)); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
 		return
 	}
@@ -172,7 +172,7 @@ func deleteUser(c *gin.Context) {
 		return
 	}
 
-	if err := userDb.DisableUser(profile.ID, c.Request); err != nil {
+	if err := userDb.DisableUser(profile.ID, appengine.NewContext(c.Request)); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
 		return
 	}
@@ -191,7 +191,7 @@ func profile(c *gin.Context) {
 		return
 	}
 
-	user, err := userDb.GetUser(profile.ID, c.Request)
+	user, err := userDb.GetUser(profile.ID, appengine.NewContext(c.Request))
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unregistered"})
 		return
@@ -208,7 +208,7 @@ func login(c *gin.Context) {
 		return
 	}
 
-	_, err := userDb.GetUser(u.ID, c.Request)
+	_, err := userDb.GetUser(u.ID, appengine.NewContext(c.Request))
 	if err != nil {
 		c.Redirect(http.StatusMovedPermanently, "/signup")
 		return
