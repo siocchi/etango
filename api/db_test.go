@@ -1,23 +1,35 @@
 package main
 
 import (
-
-	"fmt"
-	"os"
-	"strconv"
 	"testing"
-	"time"
-
-	"cloud.google.com/go/datastore"
-
-	"golang.org/x/net/context"
-	"testing"
+	"google.golang.org/appengine/aetest"
 )
 
-func testDB(t *testing.T, db WordDb) {
-	defer db.Close()
+func testDB(t *testing.T) {
+	dummyId := "testprofile"
+	var db ContentDb
 
-	if db.Text != nil {
-		t.Fatal(err)
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatalf("aetest: %v", err)
+	}
+	defer done()
+
+	js := PostContent{
+		Text: "test",
+	}
+
+	if _, err := db.Add(dummyId, js, ctx); err!=nil {
+		t.Errorf("%v", err)
+	}
+
+
+	all, err := db.GetAll(dummyId, false, "", ctx)
+	if err != nil {
+		t.Errorf("%v", err)
+	}
+
+	if len(all) == 0 {
+		t.Errorf("%v", err)
 	}
 }
