@@ -5,7 +5,7 @@ import (
 	"google.golang.org/appengine/aetest"
 )
 
-func testDB(t *testing.T) {
+func testDBNormal(t *testing.T) {
 	dummyId := "testprofile"
 	var db ContentDb
 
@@ -30,6 +30,6 @@ func testDB(t *testing.T) {
 	}
 
 	if len(all) == 0 {
-		t.Errorf("%v", err)
+		t.Errorf("failed to write in DB")
 	}
 }
