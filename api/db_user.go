@@ -14,7 +14,7 @@ type ProfileGoon struct {
 	Uid       string    `datastore:"-" goon:"id"` // id
 	UserName  string    `datastore:"user_name"`   // user name
 	CreatedAt time.Time `datastore:"created_at"`
-	// TODO LastLoginedAt
+	LastLoginedAt time.Time `datastore:"last_login_at"`
 	Disabled bool `datastore:"disabled"`
 }
 
@@ -79,7 +79,29 @@ func (db *UserDb) NewUser(uid string, user string, c context.Context) error {
 		Uid:       uid,
 		UserName:  user,
 		CreatedAt: time.Now(),
+		LastLoginedAt: time.Now(),
 		Disabled:  false,
+	}
+	_, err := g.Put(&pkey)
+
+	return err
+}
+
+func (db *UserDb) Login(uid string, c context.Context) error {
+	g := goon.FromContext(c)
+
+	p := ProfileGoon{Uid: uid}
+	if err := g.Get(&p); err != nil {
+		log.Debugf(c, "%v", err)
+		return err
+	}
+
+	pkey := ProfileGoon{
+		Uid:       uid,
+		UserName:  p.UserName,
+		CreatedAt: p.CreatedAt,
+		LastLoginedAt: time.Now(),
+		Disabled:  p.Disabled,
 	}
 	_, err := g.Put(&pkey)
 
@@ -99,6 +121,7 @@ func (db *UserDb) DisableUser(uid string, c context.Context) error {
 		Uid:       uid,
 		UserName:  p.UserName,
 		CreatedAt: p.CreatedAt,
+		LastLoginedAt: p.LastLoginedAt,
 		Disabled:  true,
 	}
 	_, err := g.Put(&pkey)

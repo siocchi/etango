@@ -213,6 +213,12 @@ func login(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/signup")
 		return
 	}
+
+	if err := userDb.Login(u.ID, ctx); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
+		return
+	}
+
 	c.Redirect(http.StatusMovedPermanently, "/home")
 }
 
