@@ -53,7 +53,8 @@ var (
 )
 
 func contents(c *gin.Context) {
-	profile := profileFromSession(appengine.NewContext(c.Request))
+	ctx := appengine.NewContext(c.Request)
+	profile := profileFromSession(ctx)
 	if profile == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
@@ -62,7 +63,7 @@ func contents(c *gin.Context) {
 	duration := c.Query("duration")
 
 	c.Header("Access-Control-Allow-Origin", "*")
-	if all, err := db.GetAll(profile.ID, is_review, duration, appengine.NewContext(c.Request)); err == nil {
+	if all, err := db.GetAll(profile.ID, is_review, duration, ctx); err == nil {
 		c.JSON(http.StatusOK, all)
 	} else {
 		c.JSON(http.StatusBadRequest, "error")
@@ -70,14 +71,15 @@ func contents(c *gin.Context) {
 }
 
 func publicContents(c *gin.Context) {
-	uid, err := userDb.GetUidByUser(c.Param("user"), appengine.NewContext(c.Request))
+	ctx := appengine.NewContext(c.Request)
+	uid, err := userDb.GetUidByUser(c.Param("user"), ctx)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "not found user"})
 		return
 	}
 
 	c.Header("Access-Control-Allow-Origin", "*")
-	if all, err := db.GetPublicAll(uid, appengine.NewContext(c.Request)); err != nil {
+	if all, err := db.GetPublicAll(uid, ctx); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error"})
 	} else {
 		c.JSON(http.StatusOK, all)
@@ -86,8 +88,9 @@ func publicContents(c *gin.Context) {
 
 func create(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
+	ctx := appengine.NewContext(c.Request)
 
-	profile := profileFromSession(appengine.NewContext(c.Request))
+	profile := profileFromSession(ctx)
 	if profile == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
@@ -95,8 +98,8 @@ func create(c *gin.Context) {
 
 	var json PostContent
 	if c.BindJSON(&json) == nil {
-		log.Debugf(appengine.NewContext(c.Request), "post:%v", json)
-		db.Add(profile.ID, json, appengine.NewContext(c.Request))
+		log.Debugf(ctx, "post:%v", json)
+		db.Add(profile.ID, json, ctx)
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "parse error"})
@@ -105,8 +108,8 @@ func create(c *gin.Context) {
 
 func edit(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
-
-	profile := profileFromSession(appengine.NewContext(c.Request))
+	ctx := appengine.NewContext(c.Request)
+	profile := profileFromSession(ctx)
 	if profile == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
@@ -117,7 +120,7 @@ func edit(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "parse error"})
 		return
 	}
-	if w, err := db.Edit(c.Param("id"), profile.ID, json, appengine.NewContext(c.Request)); err != nil {
+	if w, err := db.Edit(c.Param("id"), profile.ID, json, ctx); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "something wrong"})
 	} else {
 		c.JSON(http.StatusOK, w)
@@ -127,25 +130,27 @@ func edit(c *gin.Context) {
 func delete(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	id := c.Param("id")
+	ctx := appengine.NewContext(c.Request)
 
-	profile := profileFromSession(appengine.NewContext(c.Request))
+	profile := profileFromSession(ctx)
 	if profile == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
 	}
 
-	err := db.Delete(id, profile.ID, appengine.NewContext(c.Request))
+	err := db.Delete(id, profile.ID, ctx)
 	if err != nil {
-		log.Debugf(appengine.NewContext(c.Request), "delete error:%v", err)
+		log.Debugf(ctx, "delete error:%v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error"})
 	} else {
-		log.Debugf(appengine.NewContext(c.Request), "delete:%v", id)
+		log.Debugf(ctx, "delete:%v", id)
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	}
 }
 
 func createUser(c *gin.Context) {
-	profile := profileFromSession(appengine.NewContext(c.Request))
+	ctx := appengine.NewContext(c.Request)
+	profile := profileFromSession(ctx)
 	if profile == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
@@ -157,7 +162,7 @@ func createUser(c *gin.Context) {
 		return
 	}
 
-	if err := userDb.NewUser(profile.ID, json.User, appengine.NewContext(c.Request)); err != nil {
+	if err := userDb.NewUser(profile.ID, json.User, ctx); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
 		return
 	}
@@ -166,13 +171,14 @@ func createUser(c *gin.Context) {
 }
 
 func deleteUser(c *gin.Context) {
-	profile := profileFromSession(appengine.NewContext(c.Request))
+	ctx := appengine.NewContext(c.Request)
+	profile := profileFromSession(ctx)
 	if profile == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
 	}
 
-	if err := userDb.DisableUser(profile.ID, appengine.NewContext(c.Request)); err != nil {
+	if err := userDb.DisableUser(profile.ID, ctx); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
 		return
 	}
@@ -183,15 +189,16 @@ func deleteUser(c *gin.Context) {
 func profile(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Access-Control-Allow-Headers", "Content-Type")
+	ctx := appengine.NewContext(c.Request)
 
-	var profile = profileFromSession(appengine.NewContext(c.Request))
+	var profile = profileFromSession(ctx)
 
 	if profile == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
 		return
 	}
 
-	user, err := userDb.GetUser(profile.ID, appengine.NewContext(c.Request))
+	user, err := userDb.GetUser(profile.ID, ctx)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unregistered"})
 		return
@@ -208,7 +215,7 @@ func login(c *gin.Context) {
 		return
 	}
 
-	_, err := userDb.GetUser(u.ID, appengine.NewContext(c.Request))
+	_, err := userDb.GetUser(u.ID, ctx)
 	if err != nil {
 		c.Redirect(http.StatusMovedPermanently, "/signup")
 		return
