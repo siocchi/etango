@@ -1,8 +1,8 @@
 package main
 
 import (
-	"testing"
 	"google.golang.org/appengine/aetest"
+	"testing"
 )
 
 func testDBNormal(t *testing.T) {
@@ -19,10 +19,9 @@ func testDBNormal(t *testing.T) {
 		Text: "test",
 	}
 
-	if _, err := db.Add(dummyId, js, ctx); err!=nil {
+	if _, err := db.Add(dummyId, js, ctx); err != nil {
 		t.Errorf("%v", err)
 	}
-
 
 	all, err := db.GetAll(dummyId, false, "", ctx)
 	if err != nil {

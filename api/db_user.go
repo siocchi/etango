@@ -4,18 +4,18 @@ package main
 import (
 	"errors"
 	"github.com/mjibson/goon"
+	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
-	"golang.org/x/net/context"
 	"time"
 )
 
 type ProfileGoon struct {
-	Uid       string    `datastore:"-" goon:"id"` // id
-	UserName  string    `datastore:"user_name"`   // user name
-	CreatedAt time.Time `datastore:"created_at"`
+	Uid           string    `datastore:"-" goon:"id"`
+	UserName      string    `datastore:"user_name"`
+	CreatedAt     time.Time `datastore:"created_at"`
 	LastLoginedAt time.Time `datastore:"last_login_at"`
-	Disabled bool `datastore:"disabled"`
+	Disabled      bool      `datastore:"disabled"`
 }
 
 type UserDb struct {
@@ -76,11 +76,11 @@ func (db *UserDb) NewUser(uid string, user string, c context.Context) error {
 	}
 
 	pkey := ProfileGoon{
-		Uid:       uid,
-		UserName:  user,
-		CreatedAt: time.Now(),
+		Uid:           uid,
+		UserName:      user,
+		CreatedAt:     time.Now(),
 		LastLoginedAt: time.Now(),
-		Disabled:  false,
+		Disabled:      false,
 	}
 	_, err := g.Put(&pkey)
 
@@ -97,11 +97,11 @@ func (db *UserDb) Login(uid string, c context.Context) error {
 	}
 
 	pkey := ProfileGoon{
-		Uid:       uid,
-		UserName:  p.UserName,
-		CreatedAt: p.CreatedAt,
+		Uid:           uid,
+		UserName:      p.UserName,
+		CreatedAt:     p.CreatedAt,
 		LastLoginedAt: time.Now(),
-		Disabled:  p.Disabled,
+		Disabled:      p.Disabled,
 	}
 	_, err := g.Put(&pkey)
 
@@ -118,11 +118,11 @@ func (db *UserDb) DisableUser(uid string, c context.Context) error {
 	}
 
 	pkey := ProfileGoon{
-		Uid:       uid,
-		UserName:  p.UserName,
-		CreatedAt: p.CreatedAt,
+		Uid:           uid,
+		UserName:      p.UserName,
+		CreatedAt:     p.CreatedAt,
 		LastLoginedAt: p.LastLoginedAt,
-		Disabled:  true,
+		Disabled:      true,
 	}
 	_, err := g.Put(&pkey)
 
