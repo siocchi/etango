@@ -258,17 +258,8 @@ func init() {
 	r := gin.Default()
 
 	r.GET("/v1/words.json", contents)
-	r.OPTIONS("/v1/word.json", func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Headers", "Content-Type")
-	})
 	r.POST("/v1/word.json", create)
 
-	r.OPTIONS("/v1/word/:id/edit.json", func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Headers", "Content-Type")
-		c.Header("Access-Control-Allow-Methods", "POST, DELETE, OPTIONS")
-	})
 	r.POST("/v1/word/:id/edit.json", edit)
 	r.DELETE("/v1/word/:id/edit.json", delete)
 
