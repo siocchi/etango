@@ -158,11 +158,12 @@ func createUser(c *gin.Context) {
 
 	var json PostUser
 	if c.BindJSON(&json) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
+		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request; json error"})
 		return
 	}
 
 	if err := userDb.NewUser(profile.ID, json.User, ctx); err != nil {
+		log.Debugf(ctx, "new user :%v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"status": "bad request"})
 		return
 	}
