@@ -168,6 +168,10 @@ func (db *ContentDb) GenId(content string, c context.Context) (string, error) {
 
 func (db *ContentDb) Add(uid string, w PostContent, c context.Context) (string, error) {
 
+	if w.Text == "" {
+		return "", errors.New("empty")
+	}
+
 	key, err1 := db.GenId(w.Text, c)
 	if err1 != nil {
 		log.Debugf(c, "%v", err1)
