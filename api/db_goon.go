@@ -48,10 +48,10 @@ func (db *ContentDb) Get(key string, uid string, c context.Context) (Content, er
 		return Content{}, err
 	}
 
-	w := new(ContentGoon)
-	w.Id = key
-	w.Uid = uid_key
-
+	w := ContentGoon{
+		Id: key,
+		Uid: uid_key,
+	}
 	if err := g.Get(w); err != nil {
 		log.Debugf(c, "%v", err)
 		return Content{}, err
@@ -217,9 +217,10 @@ func (db *ContentDb) Edit(id string, uid string, ew EditContent, c context.Conte
 		return Content{}, err
 	}
 
-	w := new(ContentGoon)
-	w.Id = id
-	w.Uid = uid_key
+	w := ContentGoon{
+		Id: id,
+		Uid: uid_key,
+	}
 	if err := g.Get(w); err != nil {
 		log.Debugf(c, "edit:%v", err)
 		return Content{}, err
@@ -277,9 +278,10 @@ func (db *ContentDb) Copy(sid string, suid string, duid string, c context.Contex
 		return Content{}, err
 	}
 
-	w := new(ContentGoon)
-	w.Id = sid
-	w.Uid = suid_key
+	w := ContentGoon{
+		Id: sid,
+		Uid: suid_key,
+	}
 	if err := g.Get(w); err != nil {
 		log.Debugf(c, "edit:%v", err)
 		return Content{}, err
@@ -327,11 +329,12 @@ func (db *ContentDb) Delete(id string, uid string, c context.Context) error {
 		return err
 	}
 
-	w := new(ContentGoon)
-	w.Id = id
-	w.Uid = uid_key
+	w := ContentGoon{
+		Id: id,
+		Uid: uid_key,
+	}
 	if err := g.Get(w); err != nil {
-		log.Debugf(c, "delete:%v", err)
+		log.Debugf(c, "couldn't find:%v", err)
 		return err
 	}
 
