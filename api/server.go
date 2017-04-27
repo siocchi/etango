@@ -199,7 +199,7 @@ func profile(c *gin.Context) {
 		return
 	}
 
-	user, err := userDb.GetUser(profile.ID, ctx)
+	user, err := userDb.GetUserName(profile.ID, ctx)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "unregistered"})
 		return
@@ -216,7 +216,7 @@ func login(c *gin.Context) {
 		return
 	}
 
-	_, err := userDb.GetUser(u.ID, ctx)
+	_, err := userDb.GetUserName(u.ID, ctx)
 	if err != nil {
 		c.Redirect(http.StatusMovedPermanently, "/signup")
 		return

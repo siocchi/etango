@@ -43,7 +43,7 @@ func (db *UserDb) GetUidByUser(user string, c context.Context) (string, error) {
 	return profiles[0].Uid, nil
 }
 
-func (db *UserDb) GetUser(uid string, c context.Context) (string, error) {
+func (db *UserDb) GetUserName(uid string, c context.Context) (string, error) {
 	g := goon.FromContext(c)
 	p := ProfileGoon{Uid: uid}
 	if err := g.Get(&p); err != nil {
